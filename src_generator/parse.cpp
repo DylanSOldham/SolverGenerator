@@ -6,19 +6,12 @@ std::unique_ptr<Expression> parse_expression(System& system, std::vector<Token> 
         case TokenType::CONSTANT:
             break;
         case TokenType::SYMBOL:
-            if (tokens.size() != 1) { 
+            if (tokens.size() > 1) { 
                 auto symexpr = std::make_unique<SymbolExpression>(tokens[0].symbol.value());
 
                 switch (tokens[1].type) {
                     case TokenType::ADD:
-
                         tokens.erase(tokens.begin(), tokens.begin() + 2);
-
-                        for (size_t i = 0; i < tokens.size(); ++i)
-                        {
-                            std::cout << tokens[i].to_string();
-                        }
-
                         return std::make_unique<AddExpression>(
                             std::move(symexpr),
                             parse_expression(system, tokens)

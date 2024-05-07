@@ -87,8 +87,9 @@ int main()
                 << "\n";
   }
 
-  std::ofstream outmodule("modules/system.h", std::ios::out);
-  outmodule << "#define NUM_DEPS " << system.dependent_variables.size() << "\n\n"
+  std::ofstream outmodule("generated/system.h", std::ios::out);
+  outmodule << "#include <nvector/nvector_serial.h>\n"
+            << "#define NUM_DEPS " << system.dependent_variables.size() << "\n\n"
             << generate_state_indices(system.dependent_variables)
             << generate_initial_state_setter(system.dependent_variables)
             << generate_state_csv_label_getter(system)
