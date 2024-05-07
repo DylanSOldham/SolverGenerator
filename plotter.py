@@ -2,7 +2,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import os
 
-os.system('./modgen && make && ./solver > out.csv')
+os.system('./generator && make && ./solver > out.csv')
 
 plt.rcParams["figure.figsize"] = [7.00, 3.50]
 plt.rcParams["figure.autolayout"] = True

@@ -38,20 +38,36 @@ TEST(Parse, parse_dependent_definition)
 
 TEST(Parse, AddExpression)
 {
-    std::vector<Token> tokens = tokenize("dC/dt = A + B");
+    std::vector<Token> tokens = tokenize("A + B");
     System system;
-    parse_dependent_definition(system, tokens);
+    std::unique_ptr<Expression> expr = parse_expression(system, tokens);
 
-    ASSERT_EQ(system.dependent_variables.size(), 1);
-    auto& var = system.dependent_variables[0];
-    ASSERT_EQ(typeid(*var.rhs.get()), typeid(AddExpression));
+    ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
 
-    AddExpression& addexpr = *dynamic_cast<AddExpression*>(var.rhs.get());
+    AddExpression& addexpr = *dynamic_cast<AddExpression*>(expr.get());
     ASSERT_EQ(typeid(*addexpr.lhs.get()), typeid(SymbolExpression));
     ASSERT_EQ(typeid(*addexpr.rhs.get()), typeid(SymbolExpression));
 
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.lhs.get());
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
+    ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
+    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+}
+
+TEST(Parse, SubtractExpression)
+{
+    std::vector<Token> tokens = tokenize("A - B");
+    System system;
+    std::unique_ptr<Expression> expr = parse_expression(system, tokens);
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(SubtractExpression));
+
+    SubtractExpression& subexpr = *dynamic_cast<SubtractExpression*>(expr.get());
+    ASSERT_EQ(typeid(*subexpr.lhs.get()), typeid(SymbolExpression));
+    ASSERT_EQ(typeid(*subexpr.rhs.get()), typeid(SymbolExpression));
+
+    SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.lhs.get());
+    SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.rhs.get());
     ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
     ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
 }

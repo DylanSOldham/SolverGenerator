@@ -79,3 +79,10 @@ public:
 
     virtual std::string generate(System& system);
 };
+
+class SubtractExpression : public Expression
+{
+public:
+    std::unique_ptr<Expression> lhs;
+    std::unique_ptr<Expression> rhs;
+};
