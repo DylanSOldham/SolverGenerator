@@ -1,0 +1,5 @@
+dC/dt = -G
+C = 20
+
+dG/dt = C + G
+G = 10
