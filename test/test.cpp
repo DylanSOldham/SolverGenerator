@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../src_modgen/tokenize.h"
+#include "../src_generator/tokenize.h"
 
 
 TEST(TokenizeTest, DerivativeToken) 

@@ -5,7 +5,7 @@
 #include <sunlinsol/sunlinsol_dense.h>
 #include <sunmatrix/sunmatrix_dense.h> 
 
-#include "../modules/system.h"
+#include "../generated/system.h"
 
 void handleError(int sunerr)
 {
