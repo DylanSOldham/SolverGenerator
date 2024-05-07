@@ -74,7 +74,7 @@ void parse_declaration(System& system, std::string line)
     }
 }
 
-void parse_system(System& system, std::ifstream& stream)
+void read_system(System& system, std::ifstream& stream)
 {
     std::string line;
 

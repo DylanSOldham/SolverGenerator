@@ -44,4 +44,4 @@ void parse_initial_value(System& system, std::vector<Token> tokens);
 
 void parse_declaration(System& system, std::string line);
 
-void parse_system(System& system, std::ifstream& stream);
+void read_system(System& system, std::ifstream& stream);

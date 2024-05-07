@@ -1,4 +1,5 @@
 #include <nvector/nvector_serial.h>
+
 #define NUM_DEPS 2
 
 #define INDEX_C 0

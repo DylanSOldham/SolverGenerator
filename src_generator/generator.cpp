@@ -72,11 +72,27 @@ std::string generate_state_csv_label_getter(System& system)
     return str.str();
 }
 
+std::string generate_system(System& system)
+{
+    std::stringstream str;
+
+    auto& deps = system.dependent_variables;
+
+    str << "int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {\n"
+        << "    double* values = N_VGetArrayPointer(y);\n"
+        << "    double* derivatives = N_VGetArrayPointer(ydot);\n\n"
+        << generate_derivative_definitions(system)
+        << "    return 0;\n"
+        << "}";
+
+    return str.str();
+}
+
 int main()
 {
   std::ifstream system_src_file("system.txt", std::ios::in);
   System system;
-  parse_system(system, system_src_file);
+  read_system(system, system_src_file);
   system_src_file.close();
 
   for (size_t i = 0; i < system.dependent_variables.size(); ++i)
@@ -88,17 +104,12 @@ int main()
   }
 
   std::ofstream outmodule("generated/system.h", std::ios::out);
-  outmodule << "#include <nvector/nvector_serial.h>\n"
+  outmodule << "#include <nvector/nvector_serial.h>\n\n"
             << "#define NUM_DEPS " << system.dependent_variables.size() << "\n\n"
             << generate_state_indices(system.dependent_variables)
             << generate_initial_state_setter(system.dependent_variables)
             << generate_state_csv_label_getter(system)
-            << "int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {\n"
-            << "    double* values = N_VGetArrayPointer(y);\n"
-            << "    double* derivatives = N_VGetArrayPointer(ydot);\n\n"
-            << generate_derivative_definitions(system)
-            << "    return 0;\n"
-            << "}";
+            << generate_system(system);
 
   return 0;
 }
