@@ -8,3 +8,4 @@ out.csv
 modgen
 solver
 tests
+Makefile
