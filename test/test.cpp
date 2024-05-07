@@ -35,3 +35,23 @@ TEST(Parse, parse_dependent_definition)
     ASSERT_EQ(system.dependent_variables[0].symbol.main_symbol, 'C');
     ASSERT_EQ(typeid(*var.rhs.get()), typeid(SymbolExpression));
 }
+
+TEST(Parse, AddExpression)
+{
+    std::vector<Token> tokens = tokenize("dC/dt = A + B");
+    System system;
+    parse_dependent_definition(system, tokens);
+
+    ASSERT_EQ(system.dependent_variables.size(), 1);
+    auto& var = system.dependent_variables[0];
+    ASSERT_EQ(typeid(*var.rhs.get()), typeid(AddExpression));
+
+    AddExpression& addexpr = *dynamic_cast<AddExpression*>(var.rhs.get());
+    ASSERT_EQ(typeid(*addexpr.lhs.get()), typeid(SymbolExpression));
+    ASSERT_EQ(typeid(*addexpr.rhs.get()), typeid(SymbolExpression));
+
+    SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.lhs.get());
+    SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
+    ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
+    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+}
