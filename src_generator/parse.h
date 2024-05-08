@@ -36,7 +36,7 @@ struct System
     }
 };
 
-std::unique_ptr<Expression> parse_expression(System& system, std::vector<Token> tokens);
+std::unique_ptr<Expression> parse_expression(std::vector<Token> tokens);
 
 void parse_dependent_definition(System& system, std::vector<Token> tokens);
 

@@ -17,3 +17,10 @@ std::string AddExpression::generate(System& system)
     code << "((" << lhs->generate(system) << ") + (" << rhs->generate(system) << "))";
     return code.str();
 }
+
+std::string SubtractExpression::generate(System& system)
+{
+    std::stringstream code;
+    code << "((" << lhs->generate(system) << ") - (" << rhs->generate(system) << "))";
+    return code.str();
+}

@@ -7,6 +7,8 @@ std::string get_token_type_string(TokenType type)
         case TokenType::CONSTANT: return "CONSTANT";
         case TokenType::SYMBOL: return "SYMBOL";
         case TokenType::DERIVATIVE: return "DERIVATIVE";
+        case TokenType::LPAREN: return "LPAREN";
+        case TokenType::RPAREN: return "RPAREN";
         case TokenType::ADD: return "ADD";
         case TokenType::SUBTRACT: return "SUBTRACT";
         case TokenType::MULTIPLY: return "MULTIPLY";
@@ -111,6 +113,14 @@ std::vector<Token> tokenize(std::string line)
             tokens.push_back(Token { TokenType::DIVIDE });
             line = line.substr(1);
             continue;
+        }
+        if (line[0] == '(') {
+            tokens.push_back(Token { TokenType::LPAREN });
+            line = line.substr(1);
+        }
+        if (line[0] == ')') {
+            tokens.push_back(Token { TokenType::RPAREN });
+            line = line.substr(1);
         }
         if (std::isalpha(line[0])) {
             tokens.push_back(Token { TokenType::SYMBOL, tokenize_symbol(line) });

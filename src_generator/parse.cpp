@@ -1,37 +1,48 @@
 #include "parse.h"
 
-std::unique_ptr<Expression> parse_expression(System& system, std::vector<Token> tokens)
+std::unique_ptr<Expression> parse_expression(std::vector<Token> tokens)
 {
-    switch (tokens[0].type) {
-        case TokenType::CONSTANT:
-            break;
-        case TokenType::SYMBOL:
-            if (tokens.size() > 1) { 
-                auto symexpr = std::make_unique<SymbolExpression>(tokens[0].symbol.value());
+    std::unique_ptr<Expression> expression = nullptr;
+    std::vector<Token> subexprTokens;
 
-                switch (tokens[1].type) {
-                    case TokenType::ADD:
-                        tokens.erase(tokens.begin(), tokens.begin() + 2);
-                        return std::make_unique<AddExpression>(
-                            std::move(symexpr),
-                            parse_expression(system, tokens)
-                        );
-                        break;
-                    default:
-                    break;
+    while (tokens.size() > 0)
+    {
+        switch(tokens[0].type) 
+        {
+            case TokenType::SYMBOL:
+                expression = std::make_unique<SymbolExpression>(tokens[0].symbol.value());
+                tokens.erase(tokens.begin());
+                continue;
+            case TokenType::CONSTANT:
+                expression = std::make_unique<ConstantExpression>(tokens[0].value.value());
+                tokens.erase(tokens.begin());
+                continue;
+            case TokenType::ADD:
+                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
+                return std::make_unique<AddExpression>(std::move(expression), parse_expression(subexprTokens));
+            case TokenType::SUBTRACT:
+                if (expression) 
+                {
+                    subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());   
+                    return std::make_unique<SubtractExpression>(std::move(expression), parse_expression(subexprTokens));
                 }
-            }
-            return std::make_unique<SymbolExpression>(tokens[0].symbol.value());
-        break;
-        case TokenType::SUBTRACT:
-            tokens.erase(tokens.begin());
-            return std::make_unique<NegateExpression>(parse_expression(system, tokens));
-        break;
-        default:
-        break;
+                for (auto it = tokens.begin() + 1; it != tokens.end(); ++it) 
+                {
+                    if (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT) 
+                    {
+                        subexprTokens = std::vector<Token>(tokens.begin() + 1, it);
+                        tokens.erase(tokens.begin(), it);
+                        break;
+                    }
+                }
+                expression = std::make_unique<NegateExpression>(parse_expression(subexprTokens));
+                continue;
+            default:
+                continue;
+        }
     }
 
-    return nullptr;
+    return expression;
 }
 
 void parse_dependent_definition(System& system, std::vector<Token> tokens)
@@ -41,7 +52,7 @@ void parse_dependent_definition(System& system, std::vector<Token> tokens)
     Symbol symbol = tokens[0].symbol.value();
     tokens.erase(tokens.begin(), tokens.begin() + 2);
 
-    std::unique_ptr<Expression> expr = parse_expression(system, tokens);
+    std::unique_ptr<Expression> expr = parse_expression(tokens);
 
     system.dependent_variables.push_back(DependentVariable(symbol, std::move(expr)));
 }

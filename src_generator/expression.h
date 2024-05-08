@@ -85,4 +85,10 @@ class SubtractExpression : public Expression
 public:
     std::unique_ptr<Expression> lhs;
     std::unique_ptr<Expression> rhs;
+
+    SubtractExpression(std::unique_ptr<Expression>&& lhs, std::unique_ptr<Expression>&& rhs)
+        : lhs(std::move(lhs)), rhs(std::move(rhs))
+    {}
+
+    virtual std::string generate(System& system);
 };

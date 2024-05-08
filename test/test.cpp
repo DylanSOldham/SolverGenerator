@@ -40,7 +40,7 @@ TEST(Parse, AddExpression)
 {
     std::vector<Token> tokens = tokenize("A + B");
     System system;
-    std::unique_ptr<Expression> expr = parse_expression(system, tokens);
+    std::unique_ptr<Expression> expr = parse_expression(tokens);
 
     ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
 
@@ -58,7 +58,7 @@ TEST(Parse, SubtractExpression)
 {
     std::vector<Token> tokens = tokenize("A - B");
     System system;
-    std::unique_ptr<Expression> expr = parse_expression(system, tokens);
+    std::unique_ptr<Expression> expr = parse_expression(tokens);
 
     ASSERT_EQ(typeid(*expr.get()), typeid(SubtractExpression));
 
@@ -69,5 +69,25 @@ TEST(Parse, SubtractExpression)
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.lhs.get());
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.rhs.get());
     ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
+    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+}
+
+TEST(Parse, TrickyNegate)
+{
+    std::vector<Token> tokens = tokenize("- A + B");
+    std::unique_ptr<Expression> expr = parse_expression(tokens);
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
+
+    AddExpression& addexpr = *dynamic_cast<AddExpression*>(expr.get());
+    ASSERT_EQ(typeid(*addexpr.lhs.get()), typeid(NegateExpression));
+    ASSERT_EQ(typeid(*addexpr.rhs.get()), typeid(SymbolExpression));
+
+    NegateExpression& lhsExpr = *dynamic_cast<NegateExpression*>(addexpr.lhs.get());
+    ASSERT_EQ(typeid(*lhsExpr.negated_expression.get()), typeid(SymbolExpression));
+    SymbolExpression& negatedExpression = *dynamic_cast<SymbolExpression*>(lhsExpr.negated_expression.get());
+    ASSERT_EQ(negatedExpression.symbol.main_symbol, 'A');
+
+    SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
     ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
 }

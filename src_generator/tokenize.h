@@ -44,6 +44,8 @@ enum class TokenType {
     CONSTANT,
     SYMBOL,
     DERIVATIVE,
+    LPAREN,
+    RPAREN,
     ADD,
     SUBTRACT,
     MULTIPLY,
