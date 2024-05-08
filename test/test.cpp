@@ -91,3 +91,23 @@ TEST(Parse, TrickyNegate)
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
     ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
 }
+
+TEST(Parse, NegateAndDivide)
+{
+    std::vector<Token> tokens = tokenize("- A / B");
+    std::unique_ptr<Expression> expr = parse_expression(tokens);
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(NegateExpression));
+
+    NegateExpression& negatedexpr = *dynamic_cast<NegateExpression*>(expr.get());
+
+    DivideExpression& divexpr = *dynamic_cast<DivideExpression*>(negatedexpr.negated_expression.get());
+    ASSERT_EQ(typeid(*divexpr.lhs.get()), typeid(SymbolExpression));
+    ASSERT_EQ(typeid(*divexpr.rhs.get()), typeid(SymbolExpression));
+
+    SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(divexpr.lhs.get());
+    ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
+
+    SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(divexpr.rhs.get());
+    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+}

@@ -21,24 +21,31 @@ std::unique_ptr<Expression> parse_expression(std::vector<Token> tokens)
                 subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
                 return std::make_unique<AddExpression>(std::move(expression), parse_expression(subexprTokens));
             case TokenType::SUBTRACT:
+                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());   
                 if (expression) 
                 {
-                    subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());   
                     return std::make_unique<SubtractExpression>(std::move(expression), parse_expression(subexprTokens));
                 }
-                for (auto it = tokens.begin() + 1; it != tokens.end(); ++it) 
                 {
-                    if (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT) 
+                    auto it = tokens.begin() + 1;
+                    for (; it != tokens.end(); ++it) 
                     {
-                        subexprTokens = std::vector<Token>(tokens.begin() + 1, it);
-                        tokens.erase(tokens.begin(), it);
-                        break;
+                        if (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT) 
+                            break;
                     }
+                    subexprTokens = std::vector<Token>(tokens.begin() + 1, it);
+                    expression = std::make_unique<NegateExpression>(parse_expression(subexprTokens));
+                    tokens.erase(tokens.begin(), it);
                 }
-                expression = std::make_unique<NegateExpression>(parse_expression(subexprTokens));
                 continue;
+            case TokenType::MULTIPLY:
+                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
+                return std::make_unique<MultiplyExpression>(std::move(expression), parse_expression(subexprTokens));
+            case TokenType::DIVIDE:
+                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
+                return std::make_unique<DivideExpression>(std::move(expression), parse_expression(subexprTokens));
             default:
-                continue;
+                return nullptr;
         }
     }
 

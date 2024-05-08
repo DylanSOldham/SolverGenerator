@@ -4,5 +4,5 @@ C = 20
 dG/dt = C - G + C
 G = 10
 
-dA/dt = -G - A + 2
+dA/dt = -G * A
 A = 1
