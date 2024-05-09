@@ -17,7 +17,7 @@ TEST(Tokenize, DerivativeToken)
     EXPECT_TRUE(tokens[0].symbol.has_value());
     EXPECT_FALSE(tokens[0].value.has_value());
 
-    EXPECT_EQ(tokens[0].symbol.value().main_symbol, 'C');
+    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("C"));
 }
 
 TEST(Tokenize, IndexedDerivativeToken) 
@@ -26,44 +26,73 @@ TEST(Tokenize, IndexedDerivativeToken)
     std::vector<Token> tokens = tokenize(text);
 
     EXPECT_EQ(tokens.size(), 1);
-    EXPECT_EQ(tokens[0].type, TokenType::INDEXED_DERIVATIVE);
+    EXPECT_EQ(tokens[0].type, TokenType::DERIVATIVE);
     EXPECT_TRUE(tokens[0].symbol.has_value());
-    EXPECT_EQ(tokens[0].symbol.value().main_symbol, 'C');
-    EXPECT_TRUE(tokens[0].indices.has_value());
-    EXPECT_EQ(tokens[0].indices.value().size(), 3);
-    EXPECT_EQ(tokens[0].indices.value()[0].main_symbol, 'n');
-    EXPECT_EQ(tokens[0].indices.value()[1].main_symbol, 'x');
-    EXPECT_EQ(tokens[0].indices.value()[2].main_symbol, 'z');
+    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("C"));
+    EXPECT_TRUE(tokens[0].symbol.value().is_list());
+    EXPECT_EQ(tokens[0].symbol.value().indices.size(), 3);
+    EXPECT_EQ(tokens[0].symbol.value().indices[0].symbol, std::string("n"));
+    EXPECT_EQ(tokens[0].symbol.value().indices[1].symbol, std::string("x"));
+    EXPECT_EQ(tokens[0].symbol.value().indices[2].symbol, std::string("z"));
 }
 
 TEST(Tokenize, IndexedSymbolToken) 
 {
-    std::string text = "D(q, r,s)";
+    std::string text = "D(q)";
     std::vector<Token> tokens = tokenize(text);
 
     EXPECT_EQ(tokens.size(), 1);
-    EXPECT_EQ(tokens[0].type, TokenType::INDEXED_SYMBOL);
+    EXPECT_EQ(tokens[0].type, TokenType::SYMBOL);
     EXPECT_TRUE(tokens[0].symbol.has_value());
-    EXPECT_EQ(tokens[0].symbol.value().main_symbol, 'D');
-    EXPECT_TRUE(tokens[0].indices.has_value());
-    EXPECT_EQ(tokens[0].indices.value().size(), 3);
-    EXPECT_EQ(tokens[0].indices.value()[0].main_symbol, 'q');
-    EXPECT_EQ(tokens[0].indices.value()[1].main_symbol, 'r');
-    EXPECT_EQ(tokens[0].indices.value()[2].main_symbol, 's');
+    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D"));
+    EXPECT_TRUE(tokens[0].symbol.value().is_list());
+    EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
+    EXPECT_EQ(tokens[0].symbol.value().indices[0].symbol, std::string("q"));
 }
 
-TEST(Parse, parse_dependent_definition)
+TEST(Tokenize, InitialIndexedSymbolToken) 
+{
+    std::string text = "D_0(q)";
+    std::vector<Token> tokens = tokenize(text);
+
+    EXPECT_EQ(tokens.size(), 1);
+    EXPECT_EQ(tokens[0].type, TokenType::SYMBOL);
+    EXPECT_TRUE(tokens[0].symbol.has_value());
+    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D_0"));
+    EXPECT_TRUE(tokens[0].symbol.value().is_list());
+    EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
+    EXPECT_EQ(tokens[0].symbol.value().indices[0].symbol, std::string("q"));
+}
+
+TEST(Tokenize, ListToken) 
+{
+    std::string text = "0.1, 0.2, 0.3, 0.92";
+    std::vector<Token> tokens = tokenize(text);
+
+    EXPECT_EQ(tokens.size(), 1);
+    EXPECT_EQ(tokens[0].type, TokenType::LIST);
+    EXPECT_TRUE(tokens[0].list_values.has_value());
+
+    auto& list_values = tokens[0].list_values.value();
+    EXPECT_EQ(list_values.size(), 4);
+    EXPECT_FLOAT_EQ(list_values[0], 0.1);
+    EXPECT_FLOAT_EQ(list_values[1], 0.2);
+    EXPECT_FLOAT_EQ(list_values[2], 0.3);
+    EXPECT_FLOAT_EQ(list_values[3], 0.92);
+}
+
+TEST(Parse, parse_state_definition)
 {
     std::vector<Token> tokens = tokenize("dC/dt = C");
 
     System system;
-    parse_dependent_definition(system, tokens);
+    parse_state_definition(system, tokens);
 
-    ASSERT_EQ(system.dependent_variables.size(), 1);
+    ASSERT_EQ(system.state_variables.size(), 1);
 
-    auto& var = system.dependent_variables[0];
+    auto& var = system.state_variables[0];
 
-    ASSERT_EQ(system.dependent_variables[0].symbol.main_symbol, 'C');
+    ASSERT_EQ(system.state_variables[0].symbol.symbol, std::string("C"));
     ASSERT_EQ(typeid(*var.rhs.get()), typeid(SymbolExpression));
 }
 
@@ -81,8 +110,8 @@ TEST(Parse, AddExpression)
 
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.lhs.get());
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
-    ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
-    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+    ASSERT_EQ(lhsExpr.symbol.symbol, std::string("A"));
+    ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
 }
 
 TEST(Parse, SubtractExpression)
@@ -99,8 +128,8 @@ TEST(Parse, SubtractExpression)
 
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.lhs.get());
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.rhs.get());
-    ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
-    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+    ASSERT_EQ(lhsExpr.symbol.symbol, std::string("A"));
+    ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
 }
 
 TEST(Parse, TrickyNegate)
@@ -117,10 +146,10 @@ TEST(Parse, TrickyNegate)
     NegateExpression& lhsExpr = *dynamic_cast<NegateExpression*>(addexpr.lhs.get());
     ASSERT_EQ(typeid(*lhsExpr.negated_expression.get()), typeid(SymbolExpression));
     SymbolExpression& negatedExpression = *dynamic_cast<SymbolExpression*>(lhsExpr.negated_expression.get());
-    ASSERT_EQ(negatedExpression.symbol.main_symbol, 'A');
+    ASSERT_EQ(negatedExpression.symbol.symbol, std::string("A"));
 
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
-    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+    ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
 }
 
 TEST(Parse, NegateAndDivide)
@@ -137,8 +166,8 @@ TEST(Parse, NegateAndDivide)
     ASSERT_EQ(typeid(*divexpr.rhs.get()), typeid(SymbolExpression));
 
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(divexpr.lhs.get());
-    ASSERT_EQ(lhsExpr.symbol.main_symbol, 'A');
+    ASSERT_EQ(lhsExpr.symbol.symbol, std::string("A"));
 
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(divexpr.rhs.get());
-    ASSERT_EQ(rhsExpr.symbol.main_symbol, 'B');
+    ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
 }

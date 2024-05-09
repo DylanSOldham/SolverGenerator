@@ -6,9 +6,8 @@ std::string get_token_type_string(TokenType type)
     {
         case TokenType::CONSTANT: return "CONSTANT";
         case TokenType::SYMBOL: return "SYMBOL";
-        case TokenType::INDEXED_SYMBOL: return "INDEXED_SYMBOL";
         case TokenType::DERIVATIVE: return "DERIVATIVE";
-        case TokenType::INDEXED_DERIVATIVE: return "INDEXED_DERIVATIVE";
+        case TokenType::LIST: return "LIST";
         case TokenType::LPAREN: return "LPAREN";
         case TokenType::RPAREN: return "RPAREN";
         case TokenType::ADD: return "ADD";
@@ -36,6 +35,26 @@ std::vector<Symbol> get_indices(std::string indexList)
     return indices;
 }
 
+std::vector<float> get_list(std::string listText)
+{
+    std::vector<float> list;
+    std::smatch matches;
+
+    while (listText.size() > 0)
+    {
+        std::regex_search(listText, matches, std::regex("^,? ?([0-9]+\\.?[0-9]*)"));
+        if (matches.size() == 0) break;
+
+        list.push_back(std::atof(matches[1].str().c_str()));
+        listText = listText.substr(matches[0].str().size());
+    }
+
+    for (float f : list)
+        std::cout << f << std::endl;
+
+    return list;
+}
+
 std::vector<Token> tokenize(std::string line) 
 {
     std::vector<Token> tokens;
@@ -44,7 +63,7 @@ std::vector<Token> tokenize(std::string line)
     while (line.size() > 0) {
         
         if (std::regex_search(line, matches, std::regex("^d(.*)\\((.*)\\)/dt"))) {
-            tokens.push_back(Token { TokenType::INDEXED_DERIVATIVE, Symbol(matches[1].str()), std::nullopt, get_indices(matches[2].str()) });
+            tokens.push_back(Token { TokenType::DERIVATIVE, Symbol(matches[1].str(), get_indices(matches[2].str())), std::nullopt });
             line = line.substr(matches[0].str().size());
             continue;
         }
@@ -98,14 +117,20 @@ std::vector<Token> tokenize(std::string line)
             continue;
         }
         
-        if (std::regex_search(line, matches, std::regex("^([A-Za-z_]+)\\((.*)\\)"))) {
-            tokens.push_back(Token { TokenType::INDEXED_SYMBOL, Symbol(matches[1].str()), std::nullopt, get_indices(matches[2].str()) });
+        if (std::regex_search(line, matches, std::regex("^([A-Za-z_][A-Za-z_0-9]*)\\((.*)\\)"))) {
+            tokens.push_back(Token { TokenType::SYMBOL, Symbol(matches[1].str(), get_indices(matches[2].str())) });
             line = line.substr(matches[0].str().size());
             continue;
         }
 
-        if (std::regex_search(line, matches, std::regex("^([A-Za-z_]+)"))) {
+        if (std::regex_search(line, matches, std::regex("^([A-Za-z_][A-Za-z_0-9]*)"))) {
             tokens.push_back(Token { TokenType::SYMBOL, Symbol(matches[0]) });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+
+        if (std::regex_search(line, matches, std::regex("^([0-9]+\\.?[0-9]*), ?(?:([0-9]+\\.?[0-9]*),? ?)+"))) {
+            tokens.push_back(Token { TokenType::LIST, std::nullopt, std::nullopt, get_list(matches[0].str()) } );
             line = line.substr(matches[0].str().size());
             continue;
         }

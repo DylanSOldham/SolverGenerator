@@ -52,26 +52,41 @@ std::unique_ptr<Expression> parse_expression(std::vector<Token> tokens)
     return expression;
 }
 
-void parse_dependent_definition(System& system, std::vector<Token> tokens)
+void parse_state_definition(System& system, std::vector<Token> tokens)
 {
     if (!tokens[0].symbol.has_value()) std::cerr << "Error: Derivative is missing symbol.\n";
 
     Symbol symbol = tokens[0].symbol.value();
     tokens.erase(tokens.begin(), tokens.begin() + 2);
 
-    std::unique_ptr<Expression> expr = parse_expression(tokens);
-
-    system.dependent_variables.push_back(DependentVariable(symbol, std::move(expr)));
+    std::unique_ptr<Expression> rhs = parse_expression(tokens);
+    system.state_variables.push_back(StateVariable(symbol, std::move(rhs)));
 }
 
 void parse_initial_value(System& system, std::vector<Token> tokens)
 {
-    for (size_t i = 0; i < system.dependent_variables.size(); ++i)
+    std::optional<Symbol> underlying_symbol = tokens[0].symbol.value().uninitial();
+    if (!underlying_symbol)
     {
-        if (system.dependent_variables[i].symbol == tokens[0].symbol.value()) 
-        {
-            system.dependent_variables[i].initial_value = tokens[2].value.value();
-        }
+        std::cerr << "Error: Tried to use non-initial variable to initialize variable." << std::endl;
+        return;
+    }
+
+    system.initial_states.push_back(InitialState { underlying_symbol.value(), tokens[2].value.value() });
+}
+
+void parse_symbol_declaration(System& system, std::vector<Token> tokens) 
+{
+    Symbol symbol = tokens[0].symbol.value();
+
+    if (symbol.is_initial()) 
+    {
+        return parse_initial_value(system, tokens);
+    }
+
+    if (tokens[2].type == TokenType::LIST)
+    {
+        system.state_lists.push_back(StateList { symbol, tokens[2].list_values.value() });
     }
 }
 
@@ -84,10 +99,10 @@ void parse_declaration(System& system, std::string line)
     switch (tokens[0].type)
     {
         case TokenType::DERIVATIVE:
-            parse_dependent_definition(system, tokens);
+            parse_state_definition(system, tokens);
         break;
         case TokenType::SYMBOL:
-            parse_initial_value(system, tokens);
+            parse_symbol_declaration(system, tokens);
         break;
     }
 }

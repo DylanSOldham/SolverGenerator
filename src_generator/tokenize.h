@@ -11,42 +11,46 @@
 
 struct Symbol
 {
-    char main_symbol;
-    std::vector<char> subscripts;
+    std::string symbol;
+    std::vector<Symbol> indices;
 
-    Symbol(std::string sym, std::vector<char> subscripts = {})
-        : main_symbol(sym[0]), subscripts(subscripts)
+    Symbol(std::string sym, std::vector<Symbol> indices = {})
+        : symbol(sym), indices(indices)
     {}
 
     std::string to_string()
     {
-        std::stringstream code;
-        code << main_symbol;
-        if (subscripts.size() != 0) {
-            code << "_";
-            for (char c : subscripts)
-                code << c;
-        }
-        return code.str();
+        return symbol;
     }
 
     bool operator==(const Symbol& op)
     {
-        if (op.main_symbol != this->main_symbol) return false;
-        for (size_t i = 0; i < op.subscripts.size(); ++i) {
-            if (op.subscripts[i] != subscripts[i]) return false;
-        }
+        return op.symbol == symbol;
+    }
 
-        return true;
+    std::optional<Symbol> uninitial() {
+        std::smatch matches;
+        if (std::regex_search(symbol, matches, std::regex("(.+)_0$")))
+        {
+            return Symbol(matches[1], indices);
+        }
+        return std::nullopt;
+    }
+
+    bool is_initial() {
+        return std::regex_search(symbol, std::regex("_0$"));
+    }
+
+    bool is_list() {
+        return indices.size() != 0;
     }
 };
 
 enum class TokenType {
     CONSTANT,
     SYMBOL,
-    INDEXED_SYMBOL,
     DERIVATIVE,
-    INDEXED_DERIVATIVE,
+    LIST,
     LPAREN,
     RPAREN,
     ADD,
@@ -61,8 +65,8 @@ std::string get_token_type_string(TokenType type);
 struct Token {
     TokenType type;
     std::optional<Symbol> symbol;
-    std::optional<double> value;
-    std::optional<std::vector<Symbol>> indices;
+    std::optional<float> value;
+    std::optional<std::vector<float>> list_values;
 
     std::string to_string() {
         std::stringstream str;
@@ -79,11 +83,5 @@ struct Token {
         return str.str();
     }
 };
-
-Token tokenize_derivative(std::string& line);
-
-Symbol tokenize_symbol(std::string& line);
-
-double tokenize_constant(std::string& line);
 
 std::vector<Token> tokenize(std::string line);

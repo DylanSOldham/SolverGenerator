@@ -1,8 +1,3 @@
-dC/dt = G
-C = 20
-
-dG/dt = -C
-G = 10
-
-dA/dt = -C
-A = 9
+dC(n)/dt = -C(n)
+C_0(n) = 20
+n = 1, 2, 3

@@ -10,7 +10,7 @@ class System;
 
 enum class SymbolType 
 {
-    DEPENDENT,
+    STATE,
     CONSTANT,
     COMPOUND
 };

@@ -10,25 +10,42 @@
 #include "expression.h"
 #include "tokenize.h"
 
-struct DependentVariable
+struct StateVariable
 {
     Symbol symbol;
-    float initial_value;
     std::unique_ptr<Expression> rhs;
 
-    DependentVariable(Symbol symbol, std::unique_ptr<Expression> rhs) 
+    StateVariable(Symbol symbol, std::unique_ptr<Expression> rhs) 
         : symbol(symbol), rhs(std::move(rhs)) {}
+};
+
+struct InitialState
+{
+    Symbol symbol;
+    float value;
+};
+
+struct StateList
+{
+    Symbol symbol;
+    std::vector<float> values;
 };
 
 struct System
 {
-    std::vector<DependentVariable> dependent_variables;
+    std::vector<StateVariable> state_variables;
+    std::vector<StateList> state_lists;
+    std::vector<InitialState> initial_states;
+
+    std::map<std::string, size_t> list_bindings;
+
+    size_t max_index = 0;
 
     SymbolType resolve_symbol_type(Symbol symbol) {
-        for (size_t i = 0; i < dependent_variables.size(); ++i)
+        for (size_t i = 0; i < state_variables.size(); ++i)
         {
-            if (dependent_variables[i].symbol == symbol) {
-                return SymbolType::DEPENDENT;
+            if (state_variables[i].symbol == symbol) {
+                return SymbolType::STATE;
             }
         }
 
@@ -38,7 +55,7 @@ struct System
 
 std::unique_ptr<Expression> parse_expression(std::vector<Token> tokens);
 
-void parse_dependent_definition(System& system, std::vector<Token> tokens);
+void parse_state_definition(System& system, std::vector<Token> tokens);
 
 void parse_initial_value(System& system, std::vector<Token> tokens);
 
