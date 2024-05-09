@@ -10,7 +10,7 @@ void set_initial_state(N_Vector state) {
     double* values = N_VGetArrayPointer(state);
     values[INDEX_C] = 20;
     values[INDEX_G] = 10;
-    values[INDEX_A] = 1;
+    values[INDEX_A] = 9;
 }
 
 std::string get_state_csv_label() {
@@ -22,8 +22,8 @@ int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
     double* derivatives = N_VGetArrayPointer(ydot);
 
     derivatives[INDEX_C] = values[INDEX_G];
-    derivatives[INDEX_G] = ((values[INDEX_C]) - (((values[INDEX_G]) + (values[INDEX_C]))));
-    derivatives[INDEX_A] = -(((values[INDEX_G]) * (values[INDEX_A])));
+    derivatives[INDEX_G] = -(values[INDEX_C]);
+    derivatives[INDEX_A] = -(values[INDEX_C]);
 
     return 0;
 }

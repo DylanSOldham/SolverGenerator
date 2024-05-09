@@ -18,18 +18,6 @@ std::string get_token_type_string(TokenType type)
     }
 }
 
-Token tokenize_derivative(std::string& line)
-{
-    if (line[0] != 'd' || !std::isalpha(line[1]) || line[2] != '/' || line[3] != 'd' || line[4] != 't') {
-        std::cerr << "ERROR: Failed to parse derivative in line: " << line << "\n";
-    }
-
-    std::string symbol = line.substr(1, line.find('/') - 1);
-    line = line.substr(line.find('/') + 3);
-
-    return Token {TokenType::DERIVATIVE, Symbol(symbol) };
-}
-
 Symbol tokenize_symbol(std::string& line)
 {
 
@@ -83,51 +71,68 @@ double tokenize_constant(std::string& line)
 std::vector<Token> tokenize(std::string line) 
 {
     std::vector<Token> tokens;
+    std::smatch matches;
 
     while (line.size() > 0) {
-        if (line[0] == 'd') {
-            tokens.push_back(tokenize_derivative(line));
-            continue;
-        }
-        if (line[0] == '=') {
+        
+        if (std::regex_search(line, matches, std::regex("^="))) {
             tokens.push_back(Token { TokenType::ASSIGN });
             line = line.substr(1);
             continue;
         }
-        if (line[0] == '+') {
+        
+        if (std::regex_search(line, matches, std::regex("^d(.*)/dt"))) {
+            std::string symbol = matches[1].str();
+            tokens.push_back(Token { TokenType::DERIVATIVE, Symbol(symbol) });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+
+        if (std::regex_search(line, matches, std::regex("^\\+"))) {
             tokens.push_back(Token { TokenType::ADD });
             line = line.substr(1);
             continue;
         }
-        if (line[0] == '-') {
+
+        if (std::regex_search(line, matches, std::regex("^\\-"))) {
             tokens.push_back(Token { TokenType::SUBTRACT });
             line = line.substr(1);
             continue;
         }
-        if (line[0] == '*') {
+
+        if (std::regex_search(line, matches, std::regex("^\\*"))) {
             tokens.push_back(Token { TokenType::MULTIPLY });
             line = line.substr(1);
             continue;
         }
-        if (line[0] == '/') {
+
+        if (std::regex_search(line, matches, std::regex("^/"))) {
             tokens.push_back(Token { TokenType::DIVIDE });
             line = line.substr(1);
             continue;
         }
-        if (line[0] == '(') {
+
+        if (std::regex_search(line, matches, std::regex("^\\("))) {
             tokens.push_back(Token { TokenType::LPAREN });
             line = line.substr(1);
-        }
-        if (line[0] == ')') {
-            tokens.push_back(Token { TokenType::RPAREN });
-            line = line.substr(1);
-        }
-        if (std::isalpha(line[0])) {
-            tokens.push_back(Token { TokenType::SYMBOL, tokenize_symbol(line) });
             continue;
         }
-        if (std::isdigit(line[0]) || line[0] == '.') {
-            tokens.push_back(Token { TokenType::CONSTANT , std::nullopt, tokenize_constant(line) } );
+
+        if (std::regex_search(line, matches, std::regex("^\\)"))) {
+            tokens.push_back(Token { TokenType::RPAREN });
+            line = line.substr(1);
+            continue;
+        }
+
+        if (std::regex_search(line, matches, std::regex("^([[:alpha:]]+)"))) {
+            tokens.push_back(Token { TokenType::SYMBOL, Symbol(matches[0]) });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+
+        if (std::regex_search(line, matches, std::regex("^([[:digit:]]+\\.?[[:digit:]]*)"))) {
+            tokens.push_back(Token { TokenType::CONSTANT, std::nullopt, std::atof(matches[0].str().c_str()) } );
+            line = line.substr(matches[0].str().size());
             continue;
         }
 

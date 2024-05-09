@@ -1,8 +1,8 @@
 dC/dt = G
 C = 20
 
-dG/dt = C - G + C
+dG/dt = -C
 G = 10
 
-dA/dt = -G * A
-A = 1
+dA/dt = -C
+A = 9
