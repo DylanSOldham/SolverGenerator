@@ -44,7 +44,9 @@ struct Symbol
 enum class TokenType {
     CONSTANT,
     SYMBOL,
+    INDEXED_SYMBOL,
     DERIVATIVE,
+    INDEXED_DERIVATIVE,
     LPAREN,
     RPAREN,
     ADD,
@@ -60,6 +62,7 @@ struct Token {
     TokenType type;
     std::optional<Symbol> symbol;
     std::optional<double> value;
+    std::optional<std::vector<Symbol>> indices;
 
     std::string to_string() {
         std::stringstream str;

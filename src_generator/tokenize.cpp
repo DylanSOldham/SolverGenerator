@@ -6,7 +6,9 @@ std::string get_token_type_string(TokenType type)
     {
         case TokenType::CONSTANT: return "CONSTANT";
         case TokenType::SYMBOL: return "SYMBOL";
+        case TokenType::INDEXED_SYMBOL: return "INDEXED_SYMBOL";
         case TokenType::DERIVATIVE: return "DERIVATIVE";
+        case TokenType::INDEXED_DERIVATIVE: return "INDEXED_DERIVATIVE";
         case TokenType::LPAREN: return "LPAREN";
         case TokenType::RPAREN: return "RPAREN";
         case TokenType::ADD: return "ADD";
@@ -18,54 +20,20 @@ std::string get_token_type_string(TokenType type)
     }
 }
 
-Symbol tokenize_symbol(std::string& line)
+std::vector<Symbol> get_indices(std::string indexList)
 {
+    std::vector<Symbol> indices;
+    std::smatch matches;
 
-    size_t index = 0;
-    bool numbers_allowed = false;
-    while ( 1 )
-    {
-        if (index < line.size()) break;
-        if (!numbers_allowed && std::isdigit(line[index])) break;
-        if (line[index] == '_') numbers_allowed = true;
+    while (indexList.size() > 0) {
+        std::regex_search(indexList, matches, std::regex("^,? ?([A-Za-z_]+)"));
+        if (matches.size() == 0) break;
 
-        if (!std::isalnum(line[index])) break;
-
-        index++;
+        indices.push_back(Symbol(matches[1].str()));
+        indexList = indexList.substr(matches[0].str().size());
     }
 
-    Symbol symbol(line.substr(0, index - 1));
-
-    line = line.substr(index + 1);
-
-    return symbol;
-}
-
-double tokenize_constant(std::string& line)
-{
-    bool point_found = false;
-    int index = 0;
-    while ( 1 )
-    {
-        if (index == line.size()) break;
-
-        if (line[index] == '.') {
-            if (point_found) break;
-            point_found = true;
-            ++index;
-            continue;
-        }
-
-        if (!std::isdigit(line[index])) break;
-
-        ++index;
-    }
-
-    double num = std::atof(line.substr(0, index).c_str());
-
-    line = line.substr(index);
-
-    return num;
+    return indices;
 }
 
 std::vector<Token> tokenize(std::string line) 
@@ -75,9 +43,9 @@ std::vector<Token> tokenize(std::string line)
 
     while (line.size() > 0) {
         
-        if (std::regex_search(line, matches, std::regex("^="))) {
-            tokens.push_back(Token { TokenType::ASSIGN });
-            line = line.substr(1);
+        if (std::regex_search(line, matches, std::regex("^d(.*)\\((.*)\\)/dt"))) {
+            tokens.push_back(Token { TokenType::INDEXED_DERIVATIVE, Symbol(matches[1].str()), std::nullopt, get_indices(matches[2].str()) });
+            line = line.substr(matches[0].str().size());
             continue;
         }
         
@@ -85,6 +53,12 @@ std::vector<Token> tokenize(std::string line)
             std::string symbol = matches[1].str();
             tokens.push_back(Token { TokenType::DERIVATIVE, Symbol(symbol) });
             line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^="))) {
+            tokens.push_back(Token { TokenType::ASSIGN });
+            line = line.substr(1);
             continue;
         }
 
@@ -123,14 +97,20 @@ std::vector<Token> tokenize(std::string line)
             line = line.substr(1);
             continue;
         }
+        
+        if (std::regex_search(line, matches, std::regex("^([A-Za-z_]+)\\((.*)\\)"))) {
+            tokens.push_back(Token { TokenType::INDEXED_SYMBOL, Symbol(matches[1].str()), std::nullopt, get_indices(matches[2].str()) });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
 
-        if (std::regex_search(line, matches, std::regex("^([[:alpha:]]+)"))) {
+        if (std::regex_search(line, matches, std::regex("^([A-Za-z_]+)"))) {
             tokens.push_back(Token { TokenType::SYMBOL, Symbol(matches[0]) });
             line = line.substr(matches[0].str().size());
             continue;
         }
 
-        if (std::regex_search(line, matches, std::regex("^([[:digit:]]+\\.?[[:digit:]]*)"))) {
+        if (std::regex_search(line, matches, std::regex("^([0-9]+\\.?[0-9]*)"))) {
             tokens.push_back(Token { TokenType::CONSTANT, std::nullopt, std::atof(matches[0].str().c_str()) } );
             line = line.substr(matches[0].str().size());
             continue;

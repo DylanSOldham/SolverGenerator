@@ -8,9 +8,8 @@
 
 TEST(Tokenize, DerivativeToken) 
 {
-    std::string src = "dC/dt";
-
-    std::vector<Token> tokens = tokenize(src);
+    std::string text = "dC/dt";
+    std::vector<Token> tokens = tokenize(text);
 
     EXPECT_EQ(tokens.size(), 1);
     EXPECT_EQ(tokens[0].type, TokenType::DERIVATIVE);
@@ -19,6 +18,38 @@ TEST(Tokenize, DerivativeToken)
     EXPECT_FALSE(tokens[0].value.has_value());
 
     EXPECT_EQ(tokens[0].symbol.value().main_symbol, 'C');
+}
+
+TEST(Tokenize, IndexedDerivativeToken) 
+{
+    std::string text = "dC(n, x,z)/dt";
+    std::vector<Token> tokens = tokenize(text);
+
+    EXPECT_EQ(tokens.size(), 1);
+    EXPECT_EQ(tokens[0].type, TokenType::INDEXED_DERIVATIVE);
+    EXPECT_TRUE(tokens[0].symbol.has_value());
+    EXPECT_EQ(tokens[0].symbol.value().main_symbol, 'C');
+    EXPECT_TRUE(tokens[0].indices.has_value());
+    EXPECT_EQ(tokens[0].indices.value().size(), 3);
+    EXPECT_EQ(tokens[0].indices.value()[0].main_symbol, 'n');
+    EXPECT_EQ(tokens[0].indices.value()[1].main_symbol, 'x');
+    EXPECT_EQ(tokens[0].indices.value()[2].main_symbol, 'z');
+}
+
+TEST(Tokenize, IndexedSymbolToken) 
+{
+    std::string text = "D(q, r,s)";
+    std::vector<Token> tokens = tokenize(text);
+
+    EXPECT_EQ(tokens.size(), 1);
+    EXPECT_EQ(tokens[0].type, TokenType::INDEXED_SYMBOL);
+    EXPECT_TRUE(tokens[0].symbol.has_value());
+    EXPECT_EQ(tokens[0].symbol.value().main_symbol, 'D');
+    EXPECT_TRUE(tokens[0].indices.has_value());
+    EXPECT_EQ(tokens[0].indices.value().size(), 3);
+    EXPECT_EQ(tokens[0].indices.value()[0].main_symbol, 'q');
+    EXPECT_EQ(tokens[0].indices.value()[1].main_symbol, 'r');
+    EXPECT_EQ(tokens[0].indices.value()[2].main_symbol, 's');
 }
 
 TEST(Parse, parse_dependent_definition)
