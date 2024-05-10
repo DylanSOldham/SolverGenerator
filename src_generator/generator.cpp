@@ -13,16 +13,16 @@ std::string generate_index_list(System& system, Symbol state_symbol)
 {
     if (!system.state_lists.count(state_symbol.indices[0].symbol))
     {
-        std::cerr << "Error: Tried to generate an index which doesn't exist.\n";
+        std::cerr << "Error: Tried to generate indices for a list which doesn't exist.\n";
         return "";
     }
         
     std::stringstream str;
 
-    StateList list = system.state_lists[state_symbol.indices[0].symbol];
-    for (size_t i = 0; i < list.values.size(); ++i) 
+    size_t list_size = system.state_lists[state_symbol.indices[0].symbol];
+    for (size_t i = 0; i < list_size; ++i) 
     {
-        str << "#define INDEX_" << state_symbol.to_string() << "_" << i << " " << system.max_index++ << "\n";
+        str << "#define INDEX_" << state_symbol.to_string() << "_" << i + 1 << " " << system.max_index++ << "\n";
     }
 
     return str.str();
@@ -38,13 +38,13 @@ std::string generate_setter_list(System& system, InitialState& initial_state)
 
     std::stringstream str;
 
-    StateList list = system.state_lists[initial_state.symbol.indices[0].symbol];
-    for (size_t i = 0; i < list.values.size(); ++i) 
+    size_t list_size = system.state_lists[initial_state.symbol.indices[0].symbol];
+    for (size_t i = 0; i < list_size; ++i) 
     {
         system.list_bindings.clear();
-        system.list_bindings[list.symbol.symbol] = i;
+        system.list_bindings[initial_state.symbol.indices[0].symbol] = i + 1;
         
-        str << "    values[INDEX_" << initial_state.symbol.to_string() << "_" << i << "] = " << initial_state.rhs->generate(system) << ";\n";
+        str << "    values[INDEX_" << initial_state.symbol.to_string() << "_" << i + 1 << "] = " << initial_state.rhs->generate(system) << ";\n";
     }
 
     return str.str();
@@ -60,13 +60,13 @@ std::string generate_derivative_list(System& system, StateVariable& state_variab
 
     std::stringstream str;
 
-    StateList list = system.state_lists[state_variable.symbol.indices[0].symbol];
-    for (size_t i = 0; i < list.values.size(); ++i) 
+    size_t list_size = system.state_lists[state_variable.symbol.indices[0].symbol];
+    for (size_t i = 0; i < list_size; ++i) 
     {
         system.list_bindings.clear();
-        system.list_bindings[list.symbol.symbol] = i;
+        system.list_bindings[state_variable.symbol.indices[0].symbol] = i + 1;
 
-        str << "    derivatives[INDEX_" << state_variable.symbol.to_string() << "_" << i << "] = " << state_variable.rhs->generate(system) << ";\n";
+        str << "    derivatives[INDEX_" << state_variable.symbol.to_string() << "_" << i + 1 << "] = " << state_variable.rhs->generate(system) << ";\n";
     }
 
     return str.str();
@@ -82,10 +82,10 @@ std::string generate_csv_list(System& system, Symbol state_symbol)
 
     std::stringstream str;
 
-    StateList list = system.state_lists[state_symbol.indices[0].symbol];
-    for (size_t i = 0; i < list.values.size(); ++i) 
+    size_t list_size = system.state_lists[state_symbol.indices[0].symbol];
+    for (size_t i = 0; i < list_size; ++i) 
     {
-        str << ", " << state_symbol.to_string() << "(" << list.values[i] << ")";
+        str << ", " << state_symbol.to_string() << "(" << i + 1 << ")";
     }
 
     return str.str();

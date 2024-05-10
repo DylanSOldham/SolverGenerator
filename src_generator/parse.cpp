@@ -87,7 +87,7 @@ void parse_symbol_declaration(System& system, std::vector<Token> tokens)
 
     if (tokens[2].type == TokenType::LIST)
     {
-        system.state_lists.emplace(symbol.symbol, StateList(symbol, tokens[2].list_values.value()));
+        system.state_lists.emplace(symbol.symbol, tokens[2].list_size);
     }
 }
 

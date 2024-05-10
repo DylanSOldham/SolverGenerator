@@ -66,7 +66,7 @@ struct Token {
     TokenType type;
     std::optional<Symbol> symbol;
     std::optional<float> value;
-    std::optional<std::vector<float>> list_values;
+    size_t list_size = 0;
 
     std::string to_string() {
         std::stringstream str;

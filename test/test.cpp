@@ -66,19 +66,12 @@ TEST(Tokenize, InitialIndexedSymbolToken)
 
 TEST(Tokenize, ListToken) 
 {
-    std::string text = "0.1, 0.2, 0.3, 0.92";
+    std::string text = "1 .. 3";
     std::vector<Token> tokens = tokenize(text);
 
     EXPECT_EQ(tokens.size(), 1);
     EXPECT_EQ(tokens[0].type, TokenType::LIST);
-    EXPECT_TRUE(tokens[0].list_values.has_value());
-
-    auto& list_values = tokens[0].list_values.value();
-    EXPECT_EQ(list_values.size(), 4);
-    EXPECT_FLOAT_EQ(list_values[0], 0.1);
-    EXPECT_FLOAT_EQ(list_values[1], 0.2);
-    EXPECT_FLOAT_EQ(list_values[2], 0.3);
-    EXPECT_FLOAT_EQ(list_values[3], 0.92);
+    EXPECT_EQ(tokens[0].list_size, 3);
 }
 
 TEST(Parse, parse_state_definition)

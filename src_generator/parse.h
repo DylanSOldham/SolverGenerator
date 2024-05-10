@@ -25,26 +25,12 @@ struct InitialState
     std::unique_ptr<Expression> rhs;
 };
 
-struct StateList
-{
-    Symbol symbol;
-    std::vector<float> values;
-
-    StateList()
-        : symbol("__unknown__")
-    {}
-
-    StateList(Symbol symbol, std::vector<float> values)
-        : symbol(symbol), values(values)
-    {}
-};
-
 struct System
 {
     std::vector<StateVariable> state_variables;
     std::vector<InitialState> initial_states;
 
-    std::map<std::string, StateList> state_lists;
+    std::map<std::string, size_t> state_lists;
     std::map<std::string, size_t> list_bindings;
 
     size_t max_index = 0;

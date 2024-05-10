@@ -35,23 +35,6 @@ std::vector<Symbol> get_indices(std::string indexList)
     return indices;
 }
 
-std::vector<float> get_list(std::string listText)
-{
-    std::vector<float> list;
-    std::smatch matches;
-
-    while (listText.size() > 0)
-    {
-        std::regex_search(listText, matches, std::regex("^,? ?([0-9]+\\.?[0-9]*)"));
-        if (matches.size() == 0) break;
-
-        list.push_back(std::atof(matches[1].str().c_str()));
-        listText = listText.substr(matches[0].str().size());
-    }
-
-    return list;
-}
-
 std::vector<Token> tokenize(std::string line) 
 {
     std::vector<Token> tokens;
@@ -126,8 +109,8 @@ std::vector<Token> tokenize(std::string line)
             continue;
         }
 
-        if (std::regex_search(line, matches, std::regex("^([0-9]+\\.?[0-9]*), ?(?:([0-9]+\\.?[0-9]*),? ?)+"))) {
-            tokens.push_back(Token { TokenType::LIST, std::nullopt, std::nullopt, get_list(matches[0].str()) } );
+        if (std::regex_search(line, matches, std::regex("^1 ?\\.\\. ?([0-9]+)"))) {
+            tokens.push_back(Token { TokenType::LIST, std::nullopt, std::nullopt, (size_t) std::stoi(matches[1].str()) } );
             line = line.substr(matches[0].str().size());
             continue;
         }
