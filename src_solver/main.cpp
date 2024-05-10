@@ -24,7 +24,7 @@ int main()
     handleError( SUNContext_Create(SUN_COMM_NULL, &sun_context) );
 
     state = N_VNew_Serial(state_size, sun_context);
-    set_initial_state(state);
+    get_initial_state(state);
     
     cvodes_memory_block = CVodeCreate(CV_BDF, sun_context);
     handleError( CVodeInit(cvodes_memory_block, system, 0, state) );

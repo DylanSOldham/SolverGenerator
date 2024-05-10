@@ -72,7 +72,8 @@ void parse_initial_value(System& system, std::vector<Token> tokens)
         return;
     }
 
-    system.initial_states.push_back(InitialState { underlying_symbol.value(), tokens[2].value.value() });
+    tokens.erase(tokens.begin(), tokens.begin() + 2);
+    system.initial_states.push_back(InitialState { underlying_symbol.value(), parse_expression(tokens) });
 }
 
 void parse_symbol_declaration(System& system, std::vector<Token> tokens) 
@@ -86,7 +87,7 @@ void parse_symbol_declaration(System& system, std::vector<Token> tokens)
 
     if (tokens[2].type == TokenType::LIST)
     {
-        system.state_lists.push_back(StateList { symbol, tokens[2].list_values.value() });
+        system.state_lists.emplace(symbol.symbol, StateList(symbol, tokens[2].list_values.value()));
     }
 }
 

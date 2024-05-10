@@ -12,7 +12,8 @@ enum class SymbolType
 {
     STATE,
     CONSTANT,
-    COMPOUND
+    COMPOUND,
+    LIST_INDEX
 };
 
 class Expression

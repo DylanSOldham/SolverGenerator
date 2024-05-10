@@ -22,26 +22,39 @@ struct StateVariable
 struct InitialState
 {
     Symbol symbol;
-    float value;
+    std::unique_ptr<Expression> rhs;
 };
 
 struct StateList
 {
     Symbol symbol;
     std::vector<float> values;
+
+    StateList()
+        : symbol("__unknown__")
+    {}
+
+    StateList(Symbol symbol, std::vector<float> values)
+        : symbol(symbol), values(values)
+    {}
 };
 
 struct System
 {
     std::vector<StateVariable> state_variables;
-    std::vector<StateList> state_lists;
     std::vector<InitialState> initial_states;
 
+    std::map<std::string, StateList> state_lists;
     std::map<std::string, size_t> list_bindings;
 
     size_t max_index = 0;
 
     SymbolType resolve_symbol_type(Symbol symbol) {
+        if (list_bindings.count(symbol.symbol))
+        {
+            return SymbolType::LIST_INDEX;
+        }
+
         for (size_t i = 0; i < state_variables.size(); ++i)
         {
             if (state_variables[i].symbol == symbol) {

@@ -49,9 +49,6 @@ std::vector<float> get_list(std::string listText)
         listText = listText.substr(matches[0].str().size());
     }
 
-    for (float f : list)
-        std::cout << f << std::endl;
-
     return list;
 }
 

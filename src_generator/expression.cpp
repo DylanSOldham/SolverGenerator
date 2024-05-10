@@ -19,6 +19,16 @@ std::string SymbolExpression::generate(System& system)
         return str.str();
     }
 
+    if (type == SymbolType::LIST_INDEX)
+    {
+        if (!system.list_bindings.count(symbol.symbol))
+        {
+            std::cerr << "Error: Used an unbound list index." << std::endl;
+        }
+
+        return std::to_string(system.list_bindings[symbol.symbol]);
+    }
+
     return symbol.to_string();
 }
 
