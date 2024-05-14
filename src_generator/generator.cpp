@@ -156,6 +156,7 @@ std::string generate_initial_state_setter(System& system)
         }
         else
         {
+            system.list_bindings.clear();
             str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "] = " << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
@@ -178,6 +179,7 @@ std::string generate_derivative_definitions(System& system)
         }
         else
         {
+            system.list_bindings.clear();
             str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "] = " << deps[i].rhs->generate(system) << ";\n";
         }
     }

@@ -13,8 +13,16 @@ std::string SymbolExpression::generate(System& system)
             {
                 case IndexType::VARIABLE:
                     {
-                    size_t i = system.list_bindings[list_index.list_symbol.value()];
-                    str << "values[INDEX_" << symbol.to_string() << "_" << i << "]";
+                    if (system.list_bindings.count(list_index.list_symbol.value()))
+                    {
+                        size_t i = system.list_bindings[list_index.list_symbol.value()];
+                        str << "values[INDEX_" << symbol.to_string() << "_" << i << "]";
+                    }
+                    else
+                    {
+                        std::cerr << "Error: Tried to use unbound index variable in definition.\n";
+                        return "";
+                    }
                     }
                 break;
                 case IndexType::NUMBER:

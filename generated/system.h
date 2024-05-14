@@ -16,7 +16,7 @@ void get_initial_state(N_Vector state) {
     values[INDEX_C_3] = 0.000000;
     values[INDEX_C_4] = 0.000000;
     values[INDEX_C_5] = 0.000000;
-    values[INDEX_G] = 0.000000;
+    values[INDEX_G] = 1.000000;
 }
 
 std::string get_state_csv_label() {
