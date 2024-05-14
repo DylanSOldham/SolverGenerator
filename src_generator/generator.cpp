@@ -27,10 +27,10 @@ std::string generate_index_list(System& system, Symbol state_symbol)
     std::stringstream str;
 
     size_t list_size = system.state_lists[list_symbol];
-    for (size_t i = 0; i < list_size; ++i) 
-    {
-        str << "#define INDEX_" << state_symbol.to_string() << "_" << i + 1 << " " << system.max_index++ << "\n";
-    }
+    str << "#define INDEX_" << state_symbol.to_string() << "_START " << system.max_index << "\n";
+    str << "#define INDEX_" << state_symbol.to_string() << "_SIZE " << list_size << "\n";
+
+    system.max_index += list_size;
 
     return str.str();
 }
@@ -39,7 +39,7 @@ std::string generate_setter_list(System& system, InitialState& initial_state)
 {
     if (initial_state.symbol.indices[0].type != IndexType::VARIABLE)
     {
-        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        std::cerr << "Error: Trying to generate indices for a non variable list index." << std::endl; 
         return "";
     }
 
@@ -50,16 +50,21 @@ std::string generate_setter_list(System& system, InitialState& initial_state)
         return "";
     }
 
+    size_t list_size = system.state_lists[list_symbol];
+        system.list_bindings.clear();
+        system.list_bindings[list_symbol] = list_size;
+
     std::stringstream str;
 
-    size_t list_size = system.state_lists[list_symbol];
-    for (size_t i = 0; i < list_size; ++i) 
-    {
-        system.list_bindings.clear();
-        system.list_bindings[list_symbol] = i + 1;
-        
-        str << "    values[INDEX_" << initial_state.symbol.to_string() << "_" << i + 1 << "] = " << initial_state.rhs->generate(system) << ";\n";
-    }
+    str << "\n    for (size_t " << list_symbol << " = 1; " 
+        << list_symbol << " <= " << list_size << "; "
+        << "++" << list_symbol << ")\n"
+        << "    {\n"
+
+        << "        values[INDEX_" << initial_state.symbol.to_string() << "_START + (" << list_symbol << " - 1)] = "
+        << initial_state.rhs->generate(system) << ";\n"
+
+        << "    }\n";
 
     return str.str();
 }
@@ -78,17 +83,22 @@ std::string generate_derivative_list(System& system, StateVariable& state_variab
         std::cerr << "Error: Tried to generate derivatives for a list which doesn't exist.\n";
         return "";
     }
+    
+    size_t list_size = system.state_lists[list_symbol];
+        system.list_bindings.clear();
+        system.list_bindings[list_symbol] = list_size;
 
     std::stringstream str;
 
-    size_t list_size = system.state_lists[list_symbol];
-    for (size_t i = 0; i < list_size; ++i) 
-    {
-        system.list_bindings.clear();
-        system.list_bindings[list_symbol] = i + 1;
+    str << "\n    for (size_t " << list_symbol << " = 1; " 
+        << list_symbol << " <= " << list_size << "; "
+        << "++" << list_symbol << ")\n"
+        << "    {\n"
 
-        str << "    derivatives[INDEX_" << state_variable.symbol.to_string() << "_" << i + 1 << "] = " << state_variable.rhs->generate(system) << ";\n";
-    }
+        << "        derivatives[INDEX_" << state_variable.symbol.to_string() << "_START + (" << list_symbol << " - 1)] = "
+        << state_variable.rhs->generate(system) << ";\n"
+
+        << "    }\n";
 
     return str.str();
 }
@@ -146,8 +156,8 @@ std::string generate_initial_state_setter(System& system)
 
     std::stringstream str;
 
-    str << "void get_initial_state(N_Vector state) {\n"
-        << "    double* values = N_VGetArrayPointer(state);\n";
+    str << "void get_initial_state(N_Vector state) {"
+        << "\n    double* values = N_VGetArrayPointer(state);\n";
     for (size_t i = 0; i < initial_states.size(); ++i)
     {
         if (initial_states[i].symbol.is_list())
@@ -172,8 +182,8 @@ std::string generate_initial_state_setter(System& system)
         if (initial_states[i].symbol.is_list() && initial_states[i].symbol.indices[0].type == IndexType::NUMBER)
         {
             system.list_bindings.clear();
-            str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_" << initial_states[i].symbol.indices[0].index_start 
-                << "] = " << initial_states[i].rhs->generate(system) << ";\n";
+            str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_START + " 
+                << initial_states[i].symbol.indices[0].index_start << "] = " << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
 
@@ -211,7 +221,7 @@ std::string generate_derivative_definitions(System& system)
         if (deps[i].symbol.is_list() && deps[i].symbol.indices[0].type == IndexType::NUMBER)
         {
             system.list_bindings.clear();
-            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_" << deps[i].symbol.indices[0].index_start 
+            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_START + " << deps[i].symbol.indices[0].index_start - 1
                 << "] = " << deps[i].rhs->generate(system) << ";\n";
         }
     }
@@ -254,7 +264,7 @@ std::string generate_system(System& system)
 
     str << "int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {\n"
         << "    double* values = N_VGetArrayPointer(y);\n"
-        << "    double* derivatives = N_VGetArrayPointer(ydot);\n\n"
+        << "    double* derivatives = N_VGetArrayPointer(ydot);\n"
         << generate_derivative_definitions(system)
         << "    return 0;\n"
         << "}";

@@ -16,7 +16,7 @@ std::string SymbolExpression::generate(System& system)
                     if (system.list_bindings.count(list_index.list_symbol.value()))
                     {
                         size_t i = system.list_bindings[list_index.list_symbol.value()];
-                        str << "values[INDEX_" << symbol.to_string() << "_" << i << "]";
+                        str << "values[INDEX_" << symbol.to_string() << "_START + " << i << "]";
                     }
                     else
                     {
@@ -28,7 +28,7 @@ std::string SymbolExpression::generate(System& system)
                 case IndexType::NUMBER:
                     {
                     size_t i = list_index.index_start;
-                    str << "values[INDEX_" << symbol.to_string() << "_" << i << "]";
+                    str << "values[INDEX_" << symbol.to_string() << "_START + " << i << "]";
                     }
                 break;
                 default:
@@ -45,13 +45,15 @@ std::string SymbolExpression::generate(System& system)
 
     if (type == SymbolType::LIST_INDEX)
     {
-        if (!system.list_bindings.count(symbol.symbol))
+        if (!system.list_bindings.count(symbol.to_string()))
         {
             std::cerr << "Error: Used an unbound list index." << std::endl;
         }
 
-        return std::to_string(system.list_bindings[symbol.symbol]);
+        return symbol.to_string();
     }
+
+    std::cerr << "Use of undefined symbol " << symbol.to_string() << ". Make sure this is intentional.\n";
 
     return symbol.to_string();
 }
