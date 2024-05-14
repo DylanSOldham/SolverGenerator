@@ -54,7 +54,11 @@ std::unique_ptr<Expression> parse_expression(std::vector<Token> tokens)
 
 void parse_state_definition(System& system, std::vector<Token> tokens)
 {
-    if (!tokens[0].symbol.has_value()) std::cerr << "Error: Derivative is missing symbol.\n";
+    if (!tokens[0].symbol.has_value()) 
+    {
+        std::cerr << "Error: Derivative is missing symbol.\n";
+        return;
+    }
 
     Symbol symbol = tokens[0].symbol.value();
     tokens.erase(tokens.begin(), tokens.begin() + 2);

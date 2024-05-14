@@ -13,7 +13,7 @@ std::string generate_index_list(System& system, Symbol state_symbol)
 {
     if (state_symbol.indices[0].type != IndexType::VARIABLE)
     {
-        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl; 
         return "";
     }
 
@@ -97,7 +97,7 @@ std::string generate_csv_list(System& system, Symbol state_symbol)
 {
     if (state_symbol.indices[0].type != IndexType::VARIABLE)
     {
-        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl; 
         return "";
     }
 
@@ -152,6 +152,9 @@ std::string generate_initial_state_setter(System& system)
     {
         if (initial_states[i].symbol.is_list())
         {
+            if (initial_states[i].symbol.indices[0].type == IndexType::NUMBER)
+                continue;
+
             str << generate_setter_list(system, initial_states[i]);
         }
         else
@@ -160,6 +163,20 @@ std::string generate_initial_state_setter(System& system)
             str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "] = " << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
+
+    str << "\n";
+
+    // Second pass to define manual overrides to the list
+    for (size_t i = 0; i < initial_states.size(); ++i)
+    {
+        if (initial_states[i].symbol.is_list() && initial_states[i].symbol.indices[0].type == IndexType::NUMBER)
+        {
+            system.list_bindings.clear();
+            str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_" << initial_states[i].symbol.indices[0].index_start 
+                << "] = " << initial_states[i].rhs->generate(system) << ";\n";
+        }
+    }
+
     str << "}\n\n";
 
     return str.str();
@@ -175,6 +192,9 @@ std::string generate_derivative_definitions(System& system)
     {
         if (deps[i].symbol.is_list())
         {
+            if (deps[i].symbol.indices[0].type == IndexType::NUMBER)
+                continue;
+
             str << generate_derivative_list(system, deps[i]);
         }
         else
@@ -184,6 +204,17 @@ std::string generate_derivative_definitions(System& system)
         }
     }
     str << "\n";
+
+    // Second pass to define manual overrides to the list
+    for (size_t i = 0; i < deps.size(); ++i)
+    {
+        if (deps[i].symbol.is_list() && deps[i].symbol.indices[0].type == IndexType::NUMBER)
+        {
+            system.list_bindings.clear();
+            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_" << deps[i].symbol.indices[0].index_start 
+                << "] = " << deps[i].rhs->generate(system) << ";\n";
+        }
+    }
 
     return str.str();
 }
