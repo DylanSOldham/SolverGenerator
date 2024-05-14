@@ -11,7 +11,14 @@
 
 std::string generate_index_list(System& system, Symbol state_symbol)
 {
-    if (!system.state_lists.count(state_symbol.indices[0].symbol))
+    if (state_symbol.indices[0].type != IndexType::VARIABLE)
+    {
+        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        return "";
+    }
+
+    auto& list_symbol = state_symbol.indices[0].list_symbol.value();
+    if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate indices for a list which doesn't exist.\n";
         return "";
@@ -19,7 +26,7 @@ std::string generate_index_list(System& system, Symbol state_symbol)
         
     std::stringstream str;
 
-    size_t list_size = system.state_lists[state_symbol.indices[0].symbol];
+    size_t list_size = system.state_lists[list_symbol];
     for (size_t i = 0; i < list_size; ++i) 
     {
         str << "#define INDEX_" << state_symbol.to_string() << "_" << i + 1 << " " << system.max_index++ << "\n";
@@ -30,7 +37,14 @@ std::string generate_index_list(System& system, Symbol state_symbol)
 
 std::string generate_setter_list(System& system, InitialState& initial_state)
 {
-    if (!system.state_lists.count(initial_state.symbol.indices[0].symbol))
+    if (initial_state.symbol.indices[0].type != IndexType::VARIABLE)
+    {
+        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        return "";
+    }
+
+    auto& list_symbol = initial_state.symbol.indices[0].list_symbol.value();
+    if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate setters for a list which doesn't exist.\n";
         return "";
@@ -38,11 +52,11 @@ std::string generate_setter_list(System& system, InitialState& initial_state)
 
     std::stringstream str;
 
-    size_t list_size = system.state_lists[initial_state.symbol.indices[0].symbol];
+    size_t list_size = system.state_lists[list_symbol];
     for (size_t i = 0; i < list_size; ++i) 
     {
         system.list_bindings.clear();
-        system.list_bindings[initial_state.symbol.indices[0].symbol] = i + 1;
+        system.list_bindings[list_symbol] = i + 1;
         
         str << "    values[INDEX_" << initial_state.symbol.to_string() << "_" << i + 1 << "] = " << initial_state.rhs->generate(system) << ";\n";
     }
@@ -52,7 +66,14 @@ std::string generate_setter_list(System& system, InitialState& initial_state)
 
 std::string generate_derivative_list(System& system, StateVariable& state_variable)
 {
-    if (!system.state_lists.count(state_variable.symbol.indices[0].symbol))
+    if (state_variable.symbol.indices[0].type != IndexType::VARIABLE)
+    {
+        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        return "";
+    }
+
+    auto& list_symbol = state_variable.symbol.indices[0].list_symbol.value();
+    if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate derivatives for a list which doesn't exist.\n";
         return "";
@@ -60,11 +81,11 @@ std::string generate_derivative_list(System& system, StateVariable& state_variab
 
     std::stringstream str;
 
-    size_t list_size = system.state_lists[state_variable.symbol.indices[0].symbol];
+    size_t list_size = system.state_lists[list_symbol];
     for (size_t i = 0; i < list_size; ++i) 
     {
         system.list_bindings.clear();
-        system.list_bindings[state_variable.symbol.indices[0].symbol] = i + 1;
+        system.list_bindings[list_symbol] = i + 1;
 
         str << "    derivatives[INDEX_" << state_variable.symbol.to_string() << "_" << i + 1 << "] = " << state_variable.rhs->generate(system) << ";\n";
     }
@@ -74,7 +95,14 @@ std::string generate_derivative_list(System& system, StateVariable& state_variab
 
 std::string generate_csv_list(System& system, Symbol state_symbol)
 {
-    if (!system.state_lists.count(state_symbol.indices[0].symbol))
+    if (state_symbol.indices[0].type != IndexType::VARIABLE)
+    {
+        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        return "";
+    }
+
+    auto& list_symbol = state_symbol.indices[0].list_symbol.value();
+    if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate csv labels for a list which doesn't exist.\n";
         return "";
@@ -82,7 +110,7 @@ std::string generate_csv_list(System& system, Symbol state_symbol)
 
     std::stringstream str;
 
-    size_t list_size = system.state_lists[state_symbol.indices[0].symbol];
+    size_t list_size = system.state_lists[list_symbol];
     for (size_t i = 0; i < list_size; ++i) 
     {
         str << ", " << state_symbol.to_string() << "(" << i + 1 << ")";

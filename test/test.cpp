@@ -31,12 +31,12 @@ TEST(Tokenize, IndexedDerivativeToken)
     EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("C"));
     EXPECT_TRUE(tokens[0].symbol.value().is_list());
     EXPECT_EQ(tokens[0].symbol.value().indices.size(), 3);
-    EXPECT_EQ(tokens[0].symbol.value().indices[0].symbol, std::string("n"));
-    EXPECT_EQ(tokens[0].symbol.value().indices[1].symbol, std::string("x"));
-    EXPECT_EQ(tokens[0].symbol.value().indices[2].symbol, std::string("z"));
+    EXPECT_EQ(tokens[0].symbol.value().indices[0].list_symbol.value(), std::string("n"));
+    EXPECT_EQ(tokens[0].symbol.value().indices[1].list_symbol.value(), std::string("x"));
+    EXPECT_EQ(tokens[0].symbol.value().indices[2].list_symbol.value(), std::string("z"));
 }
 
-TEST(Tokenize, IndexedSymbolToken) 
+TEST(Tokenize, IndexedSymbolToken0) 
 {
     std::string text = "D(q)";
     std::vector<Token> tokens = tokenize(text);
@@ -47,7 +47,23 @@ TEST(Tokenize, IndexedSymbolToken)
     EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D"));
     EXPECT_TRUE(tokens[0].symbol.value().is_list());
     EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
-    EXPECT_EQ(tokens[0].symbol.value().indices[0].symbol, std::string("q"));
+    EXPECT_TRUE(tokens[0].symbol.value().indices[0].type == IndexType::VARIABLE);
+    EXPECT_EQ(tokens[0].symbol.value().indices[0].list_symbol.value(), std::string("q"));
+}
+
+TEST(Tokenize, IndexedSymbolToken1) 
+{
+    std::string text = "D(1)";
+    std::vector<Token> tokens = tokenize(text);
+
+    EXPECT_EQ(tokens.size(), 1);
+    EXPECT_EQ(tokens[0].type, TokenType::SYMBOL);
+    EXPECT_TRUE(tokens[0].symbol.has_value());
+    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D"));
+    EXPECT_TRUE(tokens[0].symbol.value().is_list());
+    EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
+    EXPECT_TRUE(tokens[0].symbol.value().indices[0].type == IndexType::NUMBER);
+    EXPECT_EQ(tokens[0].symbol.value().indices[0].index_start, 1);
 }
 
 TEST(Tokenize, InitialIndexedSymbolToken) 
@@ -61,7 +77,7 @@ TEST(Tokenize, InitialIndexedSymbolToken)
     EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D_0"));
     EXPECT_TRUE(tokens[0].symbol.value().is_list());
     EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
-    EXPECT_EQ(tokens[0].symbol.value().indices[0].symbol, std::string("q"));
+    EXPECT_EQ(tokens[0].symbol.value().indices[0].list_symbol.value(), std::string("q"));
 }
 
 TEST(Tokenize, ListToken) 

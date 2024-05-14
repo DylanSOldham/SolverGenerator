@@ -19,17 +19,30 @@ std::string get_token_type_string(TokenType type)
     }
 }
 
-std::vector<Symbol> get_indices(std::string indexList)
+std::vector<ListIndex> get_indices(std::string indexList)
 {
-    std::vector<Symbol> indices;
+    std::vector<ListIndex> indices;
     std::smatch matches;
 
     while (indexList.size() > 0) {
-        std::regex_search(indexList, matches, std::regex("^,? ?([A-Za-z_]+)"));
-        if (matches.size() == 0) break;
+        if (std::regex_search(indexList, matches, std::regex("^,? ?([0-9]+)")))
+        {
+            indices.push_back(ListIndex());
+            indices.back().type = IndexType::NUMBER;
+            indices.back().index_start = std::stoi(matches[1]);
+            indices.back().index_end = indices.back().index_start;
+            indexList = indexList.substr(matches[0].str().size());
+            continue;
+        }
 
-        indices.push_back(Symbol(matches[1].str()));
-        indexList = indexList.substr(matches[0].str().size());
+        if (std::regex_search(indexList, matches, std::regex("^,? ?([A-Za-z_][A-Za-z_0-9]*)")))
+        {
+            indices.push_back(ListIndex());
+            indices.back().type = IndexType::VARIABLE;
+            indices.back().list_symbol = matches[1].str();
+            indexList = indexList.substr(matches[0].str().size());
+            continue;
+        }
     }
 
     return indices;

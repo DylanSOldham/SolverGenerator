@@ -8,8 +8,24 @@ std::string SymbolExpression::generate(System& system)
     SymbolType type = system.resolve_symbol_type(symbol);
     if (type == SymbolType::STATE) {
         if (symbol.is_list()) {
-            size_t list_index = system.list_bindings[symbol.indices[0].symbol];
-            str << "values[INDEX_" << symbol.to_string() << "_" << list_index << "]";
+            auto& list_index = symbol.indices[0];
+            switch(list_index.type)
+            {
+                case IndexType::VARIABLE:
+                    {
+                    size_t i = system.list_bindings[list_index.list_symbol.value()];
+                    str << "values[INDEX_" << symbol.to_string() << "_" << i << "]";
+                    }
+                break;
+                case IndexType::NUMBER:
+                    {
+                    size_t i = list_index.index_start;
+                    str << "values[INDEX_" << symbol.to_string() << "_" << i << "]";
+                    }
+                break;
+                default:
+                break;
+            }
         }
         else 
         {

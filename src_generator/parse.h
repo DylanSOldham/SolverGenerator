@@ -27,10 +27,10 @@ struct InitialState
 
 struct System
 {
-    std::vector<StateVariable> state_variables;
+    std::vector<StateVariable> state_variables; // Represents the state, which may or may not include lists
     std::vector<InitialState> initial_states;
 
-    std::map<std::string, size_t> state_lists;
+    std::map<std::string, size_t> state_lists; // The lists that have been defined
     std::map<std::string, size_t> list_bindings;
 
     size_t max_index = 0;

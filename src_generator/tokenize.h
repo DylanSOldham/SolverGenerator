@@ -9,12 +9,26 @@
 #include <sstream>
 #include <regex>
 
+enum class IndexType
+{
+    VARIABLE,
+    NUMBER,
+    RANGE
+};
+
+struct ListIndex {
+    IndexType type;
+    std::optional<std::string> list_symbol;
+    size_t index_start;
+    size_t index_end;
+};
+
 struct Symbol
 {
     std::string symbol;
-    std::vector<Symbol> indices;
+    std::vector<ListIndex> indices;
 
-    Symbol(std::string sym, std::vector<Symbol> indices = {})
+    Symbol(std::string sym, std::vector<ListIndex> indices = {})
         : symbol(sym), indices(indices)
     {}
 
@@ -65,8 +79,9 @@ std::string get_token_type_string(TokenType type);
 struct Token {
     TokenType type;
     std::optional<Symbol> symbol;
-    std::optional<float> value;
-    size_t list_size = 0;
+    std::optional<float> value; // Used by CONSTANT tokens
+    size_t list_size = 0; // Used by LIST tokens
+    
 
     std::string to_string() {
         std::stringstream str;
