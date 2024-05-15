@@ -11,7 +11,6 @@ class System;
 enum class SymbolType 
 {
     STATE,
-    CONSTANT,
     COMPOUND,
     LIST_INDEX
 };

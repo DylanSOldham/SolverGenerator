@@ -5,6 +5,12 @@
 
 #define NUM_DEPS 2
 
+
+double lattice_parameter()
+{
+    return ((1.700000) * (0.000010));
+}
+
 void get_initial_state(N_Vector state) {
     double* values = N_VGetArrayPointer(state);
 
@@ -29,6 +35,6 @@ int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
         derivatives[INDEX_C_START + (n - 1)] = values[INDEX_C_START + (size_t)((n) - (1.000000))];
     }
 
-    derivatives[INDEX_C_START + (size_t)0] = 1.000000;
+    derivatives[INDEX_C_START + (size_t)0] = ((1.000000) - (((2.000000) * (lattice_parameter()))));
     return 0;
 }

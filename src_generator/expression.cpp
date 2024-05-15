@@ -52,6 +52,16 @@ std::string SymbolExpression::generate(System& system)
         return symbol.to_string();
     }
 
+    if (type == SymbolType::COMPOUND)
+    {
+        auto expr = system.expression_definitions[symbol.symbol];
+        if (!expr)
+        {
+            std::cerr << "Error: Expression " << symbol.symbol << " is undefined.";
+        }
+        return symbol.symbol + "()";
+    }
+
     std::cerr << "Use of undefined symbol " << symbol.to_string() << ". Make sure this is intentional.\n";
 
     return symbol.to_string();

@@ -129,6 +129,26 @@ std::string generate_csv_list(System& system, Symbol state_symbol)
     return str.str();
 }
 
+std::string generate_expression_functions(System& system)
+{
+    std::stringstream str;
+
+    auto& bound_expressions = system.expression_definitions;
+
+    for (auto& p : bound_expressions)
+    {
+        auto symbol = p.first;
+        std::shared_ptr<Expression> expression = p.second;
+
+        str << "\ndouble " << symbol << "()\n"
+            << "{\n"
+            << "    return " << expression->generate(system) << ";\n"
+            << "}\n\n";
+    }
+
+    return str.str();
+}
+
 std::string generate_state_indices(System& system)
 {
     std::stringstream str;
@@ -284,6 +304,7 @@ int main()
   outmodule << "#include <nvector/nvector_serial.h>\n\n"
             << generate_state_indices(system)
             << "#define NUM_DEPS " << system.max_index << "\n\n"
+            << generate_expression_functions(system)
             << generate_initial_state_setter(system)
             << generate_state_csv_label_getter(system)
             << generate_system(system);

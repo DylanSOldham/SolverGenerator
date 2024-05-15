@@ -32,6 +32,7 @@ struct System
 
     std::map<std::string, size_t> state_lists; // The lists that have been defined
     std::map<std::string, size_t> list_bindings;
+    std::map<std::string, std::shared_ptr<Expression>> expression_definitions;
 
     size_t max_index = 0;
 
@@ -48,7 +49,7 @@ struct System
             }
         }
 
-        return SymbolType::CONSTANT;
+        return SymbolType::COMPOUND;
     }
 };
 
