@@ -52,19 +52,6 @@ struct Symbol
         return op.symbol == symbol;
     }
 
-    std::optional<Symbol> uninitial() {
-        std::smatch matches;
-        if (std::regex_search(symbol, matches, std::regex("(.+)_0$")))
-        {
-            return Symbol(matches[1], indices);
-        }
-        return std::nullopt;
-    }
-
-    bool is_initial() {
-        return std::regex_search(symbol, std::regex("_0$"));
-    }
-
     bool is_list() {
         return indices.size() != 0;
     }
@@ -75,6 +62,7 @@ enum class TokenType {
     SYMBOL,
     DERIVATIVE,
     LIST,
+    INITIAL,
     LPAREN,
     RPAREN,
     ADD,

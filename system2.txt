@@ -1,0 +1,55 @@
+# MATERIAL PARAMETERS
+
+i_migration = 0.45                          # eV
+v_migration = 1.35                          # eV
+i_diffusion_0 = 1 * 10^-3                   # cm^2/s
+v_diffusion_0 = 0.6                         # cm^2/s
+i_formation = 4.1                           # eV
+v_formation = 1.7                           # eV
+i_binding = 0.6                             # eV
+v_binding = 0.5                             # eV
+recombination_radius = 0.7 * 10^-7          # cm
+i_loop_bias = 63.           
+i_dislocation_bias = 0.8            
+i_dislocation_bias_param = 1.1          
+v_loop_bias = 33.           
+v_dislocation_bias = 0.65           
+v_dislocation_bias_param = 1            
+dislocation_density_0 = 10 * 10^-12         
+grain_size = 4 * 10^-3          
+lattice_param = 3.6 * 10^-8                 # cm  
+burgers_vector = lattice_param / sqrt(2)
+atomic_volume = lattice_param ^ 3 / 4
+
+
+# REACTOR PARAMETERS
+
+flux = 2.9 * 10^-7                          # dpa / s
+temperature = 330. + 273.15                 # Degrees Kelvin
+recombination = .3
+i_bi = .5
+i_tri = .2
+i_quad = .06
+v_bi = .06
+v_tri = .03
+v_quad = .02
+dislocation_density_evolution = 300.
+
+
+# MASTER EQUATIONS
+
+# dCi(n)/dt = i_gain(n)
+
+dRho/dt = dislocation_gain - dislocation_density_evolution * burgers_vector^2 * Rho^(3/2)
+INITIAL Rho = dislocation_density_0
+
+
+# SUPPORTING EQUATIONS
+
+dislocation_gain = 0.0
+
+# i_gain(1) = flux * recombination * (1.0 - i_bi - i_tri - i_quad)
+# i_gain(2) = flux * recombination * i_bi
+# i_gain(3) = flux * recombination * i_tri
+# i_gain(4) = flux * recombination * i_quad
+# i_gain(n) = 0

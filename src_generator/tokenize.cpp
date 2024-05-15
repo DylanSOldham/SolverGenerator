@@ -14,6 +14,7 @@ std::string get_token_type_string(TokenType type)
         case TokenType::SYMBOL: return "SYMBOL";
         case TokenType::DERIVATIVE: return "DERIVATIVE";
         case TokenType::LIST: return "LIST";
+        case TokenType::INITIAL: return "INITIAL";
         case TokenType::LPAREN: return "LPAREN";
         case TokenType::RPAREN: return "RPAREN";
         case TokenType::ADD: return "ADD";
@@ -120,6 +121,12 @@ std::vector<Token> tokenize(std::string line)
         if (std::regex_search(line, matches, std::regex("^\\^"))) {
             tokens.push_back(Token { TokenType::EXPONENT });
             line = line.substr(1);
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^INITIAL"))) {
+            tokens.push_back(Token { TokenType::INITIAL });
+            line = line.substr(7);
             continue;
         }
         

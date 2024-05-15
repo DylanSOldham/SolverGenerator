@@ -164,6 +164,30 @@ TEST(Parse, TrickyExponent)
     ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
 }
 
+TEST(Parse, OrderOfOperations)
+{
+    std::vector<Token> tokens = tokenize("A + B * C ^ D * E + F");
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
+
+    System system;
+    std::cerr << expr->generate(system) << '\n';
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
+    AddExpression add_expr_1 = *dynamic_cast<AddExpression*>(expr.get());
+
+    ASSERT_EQ(typeid(*add_expr_1.lhs.get()), typeid(AddExpression));
+    AddExpression add_expr_2 = *dynamic_cast<AddExpression*>(add_expr_1.lhs.get());
+
+    ASSERT_EQ(typeid(*add_expr_2.rhs.get()), typeid(MultiplyExpression));
+    MultiplyExpression multiply_expr_1 = *dynamic_cast<MultiplyExpression*>(add_expr_2.rhs.get());
+
+    ASSERT_EQ(typeid(*multiply_expr_1.lhs.get()), typeid(MultiplyExpression));
+    MultiplyExpression multiply_expr_2 = *dynamic_cast<MultiplyExpression*>(multiply_expr_1.lhs.get());
+
+    ASSERT_EQ(typeid(*multiply_expr_2.rhs.get()), typeid(ExponentExpression));
+    ExponentExpression exponent_expr = *dynamic_cast<ExponentExpression*>(multiply_expr_2.rhs.get());
+}
+
 TEST(Parse, Sqrt)
 {
     std::vector<Token> tokens = tokenize("sqrt(7)");
@@ -200,7 +224,7 @@ TEST(Parse, NegateAndDivide)
 
 TEST(Parse, IndexedSymbol)
 {
-    std::vector<Token> tokens = tokenize("G_0(1, n, q+3) = C");
+    std::vector<Token> tokens = tokenize("INITIAL G(1, n, q+3) = C");
 
     System system;
     parse_initial_value(system, tokens);

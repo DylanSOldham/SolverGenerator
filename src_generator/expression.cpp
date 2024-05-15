@@ -67,6 +67,17 @@ std::string SymbolExpression::generate(System& system)
     return symbol.to_string();
 }
 
+bool SymbolExpression::has_state_dependencies(System& system)
+{
+    // Probably better as a map, having this ordered is nice for generation though
+    for (StateVariable& dep : system.state_variables)
+    {
+        if (dep.symbol == symbol) return true;
+    }
+
+    return false;
+}
+
 std::string AddExpression::generate(System& system)
 {
     std::stringstream code;

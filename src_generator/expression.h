@@ -18,9 +18,12 @@ enum class SymbolType
 class Expression
 {
 public:
-    std::vector<Symbol> present_symbols;
 
     virtual std::string generate(System& system) = 0;
+    virtual bool has_state_dependencies(System& system)
+    {
+        return false;
+    }
 };
 
 class ConstantExpression : public Expression
@@ -50,6 +53,7 @@ public:
     {}
 
     virtual std::string generate(System& system);
+    virtual bool has_state_dependencies(System& system);
 };
 
 class NegateExpression : public Expression
@@ -67,6 +71,11 @@ public:
         code << "-(" << negated_expression->generate(system) << ")";
         return code.str();
     }
+
+    virtual bool has_state_dependencies(System& system)
+    {
+        return negated_expression->has_state_dependencies(system);
+    }
 };
 
 class AddExpression : public Expression
@@ -80,6 +89,11 @@ public:
     {}
 
     virtual std::string generate(System& system);
+
+    virtual bool has_state_dependencies(System& system)
+    {
+        return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
+    }
 };
 
 class SubtractExpression : public Expression
@@ -93,6 +107,11 @@ public:
     {}
 
     virtual std::string generate(System& system);
+
+    virtual bool has_state_dependencies(System& system)
+    {
+        return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
+    }
 };
 
 class MultiplyExpression : public Expression
@@ -106,6 +125,11 @@ public:
     {}
 
     virtual std::string generate(System& system);
+
+    virtual bool has_state_dependencies(System& system)
+    {
+        return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
+    }
 };
 
 class DivideExpression : public Expression
@@ -119,6 +143,11 @@ public:
     {}
 
     virtual std::string generate(System& system);
+
+    virtual bool has_state_dependencies(System& system)
+    {
+        return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
+    }
 };
 
 class ExponentExpression : public Expression
@@ -132,6 +161,11 @@ public:
     {}
 
     virtual std::string generate(System& system);
+
+    virtual bool has_state_dependencies(System& system)
+    {
+        return base->has_state_dependencies(system) || exp->has_state_dependencies(system);
+    }
 };
 
 class SqrtExpression : public Expression
@@ -144,4 +178,9 @@ public:
     {}
 
     virtual std::string generate(System& system);
+
+    virtual bool has_state_dependencies(System& system)
+    {
+        return base->has_state_dependencies(system);
+    }
 };

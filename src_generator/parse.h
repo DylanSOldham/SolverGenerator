@@ -53,7 +53,7 @@ struct System
     }
 };
 
-std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens);
+std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens);
 
 void parse_state_definition(System& system, std::vector<Token> tokens);
 

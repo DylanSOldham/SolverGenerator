@@ -137,13 +137,18 @@ std::string generate_expression_functions(System &system)
 
     for (auto &p : bound_expressions)
     {
+        str << "\ndouble " << p.first << "();";
+    }
+
+    for (auto &p : bound_expressions)
+    {
         auto symbol = p.first;
         std::shared_ptr<Expression> expression = p.second;
 
         str << "\n\ndouble " << symbol << "()\n"
             << "{\n"
             << "    return " << expression->generate(system) << ";\n"
-            << "}\n";
+            << "}";
     }
 
     return str.str();
@@ -176,7 +181,7 @@ std::string generate_initial_state_setter(System &system)
 
     std::stringstream str;
 
-    str << "void get_initial_state(N_Vector state) {"
+    str << "\n\nvoid get_initial_state(N_Vector state) {"
         << "\n    double* values = N_VGetArrayPointer(state);\n";
     for (size_t i = 0; i < initial_states.size(); ++i)
     {
@@ -193,8 +198,6 @@ std::string generate_initial_state_setter(System &system)
             str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "] = " << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
-
-    str << "\n";
 
     // Second pass to define manual overrides to the list
     for (size_t i = 0; i < initial_states.size(); ++i)
@@ -305,7 +308,7 @@ int main(int argc, char **argv)
     outmodule << "#include <cmath>\n"
               << "#include <nvector/nvector_serial.h>\n\n"
               << generate_state_indices(system)
-              << "#define NUM_DEPS " << system.max_index << "\n\n"
+              << "#define NUM_DEPS " << system.max_index << "\n"
               << generate_expression_functions(system)
               << generate_initial_state_setter(system)
               << generate_state_csv_label_getter(system)
