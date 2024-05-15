@@ -46,6 +46,15 @@ TEST(Tokenize, ListToken)
     EXPECT_EQ(tokens[0].list_size, 3);
 }
 
+TEST(Tokenize, SqrtToken) 
+{
+    std::string text = "sqrt(q)";
+    std::vector<Token> tokens = tokenize(text);
+    
+    EXPECT_EQ(tokens.size(), 4);
+    EXPECT_EQ(tokens[0].type, TokenType::SQRT);
+}
+
 TEST(Parse, parse_state_definition)
 {
     std::vector<Token> tokens = tokenize("dC/dt = C");
@@ -97,6 +106,20 @@ TEST(Parse, SubtractExpression)
     ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
 }
 
+TEST(Parse, NegateParentheses)
+{
+    std::vector<Token> tokens = tokenize("-(A)");
+    System system;
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(NegateExpression));
+
+    NegateExpression& negate_expr = *dynamic_cast<NegateExpression*>(expr.get());
+    ASSERT_EQ(typeid(*negate_expr.negated_expression.get()), typeid(SymbolExpression));
+    SymbolExpression& negatedExpression = *dynamic_cast<SymbolExpression*>(negate_expr.negated_expression.get());
+    ASSERT_EQ(negatedExpression.symbol.symbol, std::string("A"));
+}
+
 TEST(Parse, TrickyNegate)
 {
     std::vector<Token> tokens = tokenize("- A + B");
@@ -139,6 +162,20 @@ TEST(Parse, TrickyExponent)
 
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
     ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+}
+
+TEST(Parse, Sqrt)
+{
+    std::vector<Token> tokens = tokenize("sqrt(7)");
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(SqrtExpression));
+
+    SqrtExpression& sqrtexpr = *dynamic_cast<SqrtExpression*>(expr.get());
+    ASSERT_EQ(typeid(*sqrtexpr.base.get()), typeid(ConstantExpression));
+
+    ConstantExpression& constant_expression = *dynamic_cast<ConstantExpression*>(sqrtexpr.base.get());
+    ASSERT_EQ(constant_expression.value, 7);
 }
 
 TEST(Parse, NegateAndDivide)

@@ -25,6 +25,47 @@ Symbol parse_symbol(std::vector<Token>& tokens)
     return symbol;
 }
 
+std::shared_ptr<Expression> parse_parentheses(std::vector<Token>& tokens)
+{
+    size_t paren_level = 0;
+    auto it = tokens.begin();
+    for (; it != tokens.end(); ++it)
+    {
+        if (paren_level == 0 && it->type == TokenType::RPAREN) break;
+        if (it->type == TokenType::LPAREN) paren_level += 1;
+        if (it->type == TokenType::RPAREN) paren_level -= 1;
+    }
+
+    auto subexprTokens = std::vector<Token>(tokens.begin() + 1, it - 1);
+    tokens.erase(tokens.begin(), it);
+    return parse_expression(subexprTokens);
+}
+
+std::shared_ptr<Expression> parse_unary_expression(std::vector<Token>& tokens)
+{
+    if (tokens[1].type == TokenType::LPAREN)
+    {
+        tokens.erase(tokens.begin());
+        return parse_parentheses(tokens);
+    }
+
+    // Explanation: https://www.youtube.com/watch?v=CoEPkF2ti8M
+    size_t paren_level = 0;
+    auto it = tokens.begin() + 1;
+    for (; it != tokens.end(); ++it) 
+    {
+        if (it->type == TokenType::LPAREN) paren_level += 1;
+        if (it->type == TokenType::RPAREN) paren_level -= 1;
+        if (paren_level == 0 && (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT)) 
+            break;
+    }
+    
+    auto subexprTokens = std::vector<Token>(tokens.begin() + 1, it);
+    auto expression = parse_expression(subexprTokens);
+    tokens.erase(tokens.begin(), it);
+    return expression;
+}
+
 std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens)
 {
     std::shared_ptr<Expression> expression = nullptr;
@@ -34,6 +75,9 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens)
     {
         switch(tokens[0].type) 
         {
+            case TokenType::LPAREN:
+                expression = parse_parentheses(tokens);
+                continue;
             case TokenType::SYMBOL:
                 expression = std::make_shared<SymbolExpression>(parse_symbol(tokens));
                 continue;
@@ -45,26 +89,13 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens)
                 subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
                 return std::make_shared<AddExpression>(expression, parse_expression(subexprTokens));
             case TokenType::SUBTRACT:
-                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
                 if (expression) 
                 {
+                    subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
                     return std::make_shared<SubtractExpression>(expression, parse_expression(subexprTokens));
                 }
                 {
-                    auto it = tokens.begin() + 1;
-                    size_t paren_level = 0;
-
-                    // Explanation: https://www.youtube.com/watch?v=CoEPkF2ti8M
-                    for (; it != tokens.end(); ++it) 
-                    {
-                        if (it->type == TokenType::LPAREN) paren_level += 1;
-                        if (it->type == TokenType::RPAREN) paren_level -= 1;
-                        if (paren_level == 0 && (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT)) 
-                            break;
-                    }
-                    subexprTokens = std::vector<Token>(tokens.begin() + 1, it);
-                    expression = std::make_shared<NegateExpression>(parse_expression(subexprTokens));
-                    tokens.erase(tokens.begin(), it);
+                    expression = std::make_shared<NegateExpression>(parse_unary_expression(tokens));
                 }
                 continue;
             case TokenType::MULTIPLY:
@@ -76,6 +107,16 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens)
             case TokenType::EXPONENT:
                 subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
                 return std::make_unique<ExponentExpression>(expression, parse_expression(subexprTokens));
+            case TokenType::SQRT:
+                {
+                auto unary_expr = parse_unary_expression(tokens);
+                if (!unary_expr)
+                {
+                    std::cerr << "Error: Sqrt doesn't have a valid expression.\n";
+                }
+                expression = std::make_shared<SqrtExpression>(unary_expr);
+                }
+                continue;
             default:
                 return nullptr;
         }

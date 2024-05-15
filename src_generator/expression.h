@@ -133,3 +133,15 @@ public:
 
     virtual std::string generate(System& system);
 };
+
+class SqrtExpression : public Expression
+{
+public:
+    std::shared_ptr<Expression> base;
+
+    SqrtExpression(std::shared_ptr<Expression> base)
+        : base(base)
+    {}
+
+    virtual std::string generate(System& system);
+};

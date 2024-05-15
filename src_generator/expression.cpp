@@ -57,7 +57,7 @@ std::string SymbolExpression::generate(System& system)
         auto expr = system.expression_definitions[symbol.symbol];
         if (!expr)
         {
-            std::cerr << "Error: Expression " << symbol.symbol << " is undefined.";
+            std::cerr << "Error: Expression " << symbol.symbol << " is undefined.\n";
         }
         return symbol.symbol + "()";
     }
@@ -99,5 +99,12 @@ std::string ExponentExpression::generate(System& system)
 {
     std::stringstream code;
     code << "std::pow(" << base->generate(system) << ", " << exp->generate(system) << ")";
+    return code.str();
+}
+
+std::string SqrtExpression::generate(System& system)
+{
+    std::stringstream code;
+    code << "std::sqrt(" << base->generate(system) << ")";
     return code.str();
 }

@@ -9,21 +9,21 @@
 #include "expression.h"
 #include "parse.h"
 
-std::string generate_index_list(System& system, Symbol state_symbol)
+std::string generate_index_list(System &system, Symbol state_symbol)
 {
     if (state_symbol.indices[0].type != IndexType::VARIABLE)
     {
-        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl; 
+        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl;
         return "";
     }
 
-    auto& list_symbol = state_symbol.indices[0].list_symbol.value();
+    auto &list_symbol = state_symbol.indices[0].list_symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate indices for a list which doesn't exist.\n";
         return "";
     }
-        
+
     std::stringstream str;
 
     size_t list_size = system.state_lists[list_symbol];
@@ -35,15 +35,15 @@ std::string generate_index_list(System& system, Symbol state_symbol)
     return str.str();
 }
 
-std::string generate_setter_list(System& system, InitialState& initial_state)
+std::string generate_setter_list(System &system, InitialState &initial_state)
 {
     if (initial_state.symbol.indices[0].type != IndexType::VARIABLE)
     {
-        std::cerr << "Error: Trying to generate indices for a non variable list index." << std::endl; 
+        std::cerr << "Error: Trying to generate indices for a non variable list index." << std::endl;
         return "";
     }
 
-    auto& list_symbol = initial_state.symbol.indices[0].list_symbol.value();
+    auto &list_symbol = initial_state.symbol.indices[0].list_symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate setters for a list which doesn't exist.\n";
@@ -51,12 +51,12 @@ std::string generate_setter_list(System& system, InitialState& initial_state)
     }
 
     size_t list_size = system.state_lists[list_symbol];
-        system.list_bindings.clear();
-        system.list_bindings[list_symbol] = list_size;
+    system.list_bindings.clear();
+    system.list_bindings[list_symbol] = list_size;
 
     std::stringstream str;
 
-    str << "\n    for (size_t " << list_symbol << " = 1; " 
+    str << "\n    for (size_t " << list_symbol << " = 1; "
         << list_symbol << " <= " << list_size << "; "
         << "++" << list_symbol << ")\n"
         << "    {\n"
@@ -69,28 +69,28 @@ std::string generate_setter_list(System& system, InitialState& initial_state)
     return str.str();
 }
 
-std::string generate_derivative_list(System& system, StateVariable& state_variable)
+std::string generate_derivative_list(System &system, StateVariable &state_variable)
 {
     if (state_variable.symbol.indices[0].type != IndexType::VARIABLE)
     {
-        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl; 
+        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl;
         return "";
     }
 
-    auto& list_symbol = state_variable.symbol.indices[0].list_symbol.value();
+    auto &list_symbol = state_variable.symbol.indices[0].list_symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate derivatives for a list which doesn't exist.\n";
         return "";
     }
-    
+
     size_t list_size = system.state_lists[list_symbol];
-        system.list_bindings.clear();
-        system.list_bindings[list_symbol] = list_size;
+    system.list_bindings.clear();
+    system.list_bindings[list_symbol] = list_size;
 
     std::stringstream str;
 
-    str << "\n    for (size_t " << list_symbol << " = 1; " 
+    str << "\n    for (size_t " << list_symbol << " = 1; "
         << list_symbol << " <= " << list_size << "; "
         << "++" << list_symbol << ")\n"
         << "    {\n"
@@ -103,15 +103,15 @@ std::string generate_derivative_list(System& system, StateVariable& state_variab
     return str.str();
 }
 
-std::string generate_csv_list(System& system, Symbol state_symbol)
+std::string generate_csv_list(System &system, Symbol state_symbol)
 {
     if (state_symbol.indices[0].type != IndexType::VARIABLE)
     {
-        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl; 
+        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl;
         return "";
     }
 
-    auto& list_symbol = state_symbol.indices[0].list_symbol.value();
+    auto &list_symbol = state_symbol.indices[0].list_symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate csv labels for a list which doesn't exist.\n";
@@ -121,7 +121,7 @@ std::string generate_csv_list(System& system, Symbol state_symbol)
     std::stringstream str;
 
     size_t list_size = system.state_lists[list_symbol];
-    for (size_t i = 0; i < list_size; ++i) 
+    for (size_t i = 0; i < list_size; ++i)
     {
         str << ", " << state_symbol.to_string() << "(" << i + 1 << ")";
     }
@@ -129,30 +129,30 @@ std::string generate_csv_list(System& system, Symbol state_symbol)
     return str.str();
 }
 
-std::string generate_expression_functions(System& system)
+std::string generate_expression_functions(System &system)
 {
     std::stringstream str;
 
-    auto& bound_expressions = system.expression_definitions;
+    auto &bound_expressions = system.expression_definitions;
 
-    for (auto& p : bound_expressions)
+    for (auto &p : bound_expressions)
     {
         auto symbol = p.first;
         std::shared_ptr<Expression> expression = p.second;
 
-        str << "\ndouble " << symbol << "()\n"
+        str << "\n\ndouble " << symbol << "()\n"
             << "{\n"
             << "    return " << expression->generate(system) << ";\n"
-            << "}\n\n";
+            << "}\n";
     }
 
     return str.str();
 }
 
-std::string generate_state_indices(System& system)
+std::string generate_state_indices(System &system)
 {
     std::stringstream str;
-    auto& state_variables = system.state_variables;
+    auto &state_variables = system.state_variables;
 
     for (size_t i = 0; i < state_variables.size(); ++i)
     {
@@ -160,7 +160,7 @@ std::string generate_state_indices(System& system)
         {
             str << generate_index_list(system, state_variables[i].symbol);
         }
-        else 
+        else
         {
             str << "#define INDEX_" << state_variables[i].symbol.to_string() << " " << system.max_index++ << "\n";
         }
@@ -170,9 +170,9 @@ std::string generate_state_indices(System& system)
     return str.str();
 }
 
-std::string generate_initial_state_setter(System& system) 
+std::string generate_initial_state_setter(System &system)
 {
-    auto& initial_states = system.initial_states;
+    auto &initial_states = system.initial_states;
 
     std::stringstream str;
 
@@ -202,8 +202,8 @@ std::string generate_initial_state_setter(System& system)
         if (initial_states[i].symbol.is_list() && initial_states[i].symbol.indices[0].type == IndexType::EXPRESSION)
         {
             system.list_bindings.clear();
-            str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_START + (size_t)" 
-                << "(" << initial_states[i].symbol.indices[0].expression->generate(system) << " - 1)" << "] = " 
+            str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_START + (size_t)"
+                << "(" << initial_states[i].symbol.indices[0].expression->generate(system) << " - 1)" << "] = "
                 << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
@@ -213,9 +213,9 @@ std::string generate_initial_state_setter(System& system)
     return str.str();
 }
 
-std::string generate_derivative_definitions(System& system)
+std::string generate_derivative_definitions(System &system)
 {
-    auto& deps = system.state_variables;
+    auto &deps = system.state_variables;
 
     std::stringstream str;
 
@@ -250,11 +250,11 @@ std::string generate_derivative_definitions(System& system)
     return str.str();
 }
 
-std::string generate_state_csv_label_getter(System& system)
+std::string generate_state_csv_label_getter(System &system)
 {
     std::stringstream str;
 
-    auto& deps = system.state_variables;
+    auto &deps = system.state_variables;
 
     str << "std::string get_state_csv_label() {\n";
 
@@ -277,11 +277,11 @@ std::string generate_state_csv_label_getter(System& system)
     return str.str();
 }
 
-std::string generate_system(System& system)
+std::string generate_system(System &system)
 {
     std::stringstream str;
 
-    auto& deps = system.state_variables;
+    auto &deps = system.state_variables;
 
     str << "int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {\n"
         << "    double* values = N_VGetArrayPointer(y);\n"
@@ -293,22 +293,23 @@ std::string generate_system(System& system)
     return str.str();
 }
 
-int main()
+int main(int argc, char **argv)
 {
-  std::ifstream system_src_file("system.txt", std::ios::in);
-  System system;
-  read_system(system, system_src_file);
-  system_src_file.close();
+    std::string filename = (argc < 2) ? "system.txt" : argv[1];
+    std::ifstream system_src_file(filename, std::ios::in);
+    System system;
+    read_system(system, system_src_file);
+    system_src_file.close();
 
-  std::ofstream outmodule("generated/system.h", std::ios::out);
-  outmodule << "#include <cmath>\n"
-            << "#include <nvector/nvector_serial.h>\n\n"
-            << generate_state_indices(system)
-            << "#define NUM_DEPS " << system.max_index << "\n\n"
-            << generate_expression_functions(system)
-            << generate_initial_state_setter(system)
-            << generate_state_csv_label_getter(system)
-            << generate_system(system);
+    std::ofstream outmodule("generated/system.h", std::ios::out);
+    outmodule << "#include <cmath>\n"
+              << "#include <nvector/nvector_serial.h>\n\n"
+              << generate_state_indices(system)
+              << "#define NUM_DEPS " << system.max_index << "\n\n"
+              << generate_expression_functions(system)
+              << generate_initial_state_setter(system)
+              << generate_state_csv_label_getter(system)
+              << generate_system(system);
 
-  return 0;
+    return 0;
 }
