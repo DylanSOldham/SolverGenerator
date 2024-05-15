@@ -301,7 +301,8 @@ int main()
   system_src_file.close();
 
   std::ofstream outmodule("generated/system.h", std::ios::out);
-  outmodule << "#include <nvector/nvector_serial.h>\n\n"
+  outmodule << "#include <cmath>\n"
+            << "#include <nvector/nvector_serial.h>\n\n"
             << generate_state_indices(system)
             << "#define NUM_DEPS " << system.max_index << "\n\n"
             << generate_expression_functions(system)

@@ -117,6 +117,30 @@ TEST(Parse, TrickyNegate)
     ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
 }
 
+TEST(Parse, TrickyExponent)
+{
+    std::vector<Token> tokens = tokenize("- A ^ C(1) + B");
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
+
+    AddExpression& addexpr = *dynamic_cast<AddExpression*>(expr.get());
+    ASSERT_EQ(typeid(*addexpr.lhs.get()), typeid(NegateExpression));
+    ASSERT_EQ(typeid(*addexpr.rhs.get()), typeid(SymbolExpression));
+
+    NegateExpression& lhsExpr = *dynamic_cast<NegateExpression*>(addexpr.lhs.get());
+    ASSERT_EQ(typeid(*lhsExpr.negated_expression.get()), typeid(ExponentExpression));
+
+    ExponentExpression& exponent_expression = *dynamic_cast<ExponentExpression*>(lhsExpr.negated_expression.get());
+    ASSERT_EQ(typeid(*exponent_expression.exp.get()), typeid(SymbolExpression));
+
+    SymbolExpression& exp = *dynamic_cast<SymbolExpression*>(exponent_expression.exp.get());
+    ASSERT_EQ(exp.symbol.indices.size(), 1);
+
+    SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
+    ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+}
+
 TEST(Parse, NegateAndDivide)
 {
     std::vector<Token> tokens = tokenize("- A / B");

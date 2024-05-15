@@ -111,6 +111,12 @@ std::vector<Token> tokenize(std::string line)
             continue;
         }
 
+        if (std::regex_search(line, matches, std::regex("^\\^"))) {
+            tokens.push_back(Token { TokenType::EXPONENT });
+            line = line.substr(1);
+            continue;
+        }
+
         if (std::regex_search(line, matches, std::regex("^\\("))) {
             tokens.push_back(Token { TokenType::LPAREN });
             line = line.substr(1);

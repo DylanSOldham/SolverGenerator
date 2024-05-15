@@ -81,6 +81,7 @@ enum class TokenType {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
+    EXPONENT,
     ASSIGN,
     COMMA
 };

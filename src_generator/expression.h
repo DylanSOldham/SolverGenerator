@@ -34,7 +34,9 @@ public:
 
     virtual std::string generate(System& system)
     {
-        return std::to_string(value);
+        std::stringstream str;
+        str << value;
+        return str.str();
     }
 };
 
@@ -114,6 +116,19 @@ public:
 
     DivideExpression(std::shared_ptr<Expression> lhs, std::shared_ptr<Expression> rhs)
         : lhs(lhs), rhs(rhs)
+    {}
+
+    virtual std::string generate(System& system);
+};
+
+class ExponentExpression : public Expression
+{
+public:
+    std::shared_ptr<Expression> base;
+    std::shared_ptr<Expression> exp;
+
+    ExponentExpression(std::shared_ptr<Expression> base, std::shared_ptr<Expression> exp)
+        : base(base), exp(exp)
     {}
 
     virtual std::string generate(System& system);

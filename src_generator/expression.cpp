@@ -94,3 +94,10 @@ std::string DivideExpression::generate(System& system)
     code << "((" << lhs->generate(system) << ") / (" << rhs->generate(system) << "))";
     return code.str();
 }
+
+std::string ExponentExpression::generate(System& system)
+{
+    std::stringstream code;
+    code << "std::pow(" << base->generate(system) << ", " << exp->generate(system) << ")";
+    return code.str();
+}

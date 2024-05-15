@@ -45,7 +45,7 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens)
                 subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
                 return std::make_shared<AddExpression>(expression, parse_expression(subexprTokens));
             case TokenType::SUBTRACT:
-                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());   
+                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
                 if (expression) 
                 {
                     return std::make_shared<SubtractExpression>(expression, parse_expression(subexprTokens));
@@ -69,10 +69,13 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens)
                 continue;
             case TokenType::MULTIPLY:
                 subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
-                return std::make_unique<MultiplyExpression>(std::move(expression), parse_expression(subexprTokens));
+                return std::make_unique<MultiplyExpression>(expression, parse_expression(subexprTokens));
             case TokenType::DIVIDE:
                 subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
-                return std::make_unique<DivideExpression>(std::move(expression), parse_expression(subexprTokens));
+                return std::make_unique<DivideExpression>(expression, parse_expression(subexprTokens));
+            case TokenType::EXPONENT:
+                subexprTokens = std::vector<Token>(tokens.begin() + 1, tokens.end());
+                return std::make_unique<ExponentExpression>(expression, parse_expression(subexprTokens));
             default:
                 return nullptr;
         }
