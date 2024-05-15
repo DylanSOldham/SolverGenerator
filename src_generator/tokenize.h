@@ -12,15 +12,19 @@
 enum class IndexType
 {
     VARIABLE,
-    NUMBER,
-    RANGE
+    EXPRESSION
 };
+
+class Expression;
 
 struct ListIndex {
     IndexType type;
     std::optional<std::string> list_symbol;
-    size_t index_start;
-    size_t index_end;
+    std::shared_ptr<Expression> expression = nullptr;
+    size_t index_start = -1;
+    size_t index_end = -2;
+
+    ~ListIndex();
 };
 
 struct Symbol
@@ -28,9 +32,15 @@ struct Symbol
     std::string symbol;
     std::vector<ListIndex> indices;
 
-    Symbol(std::string sym, std::vector<ListIndex> indices = {})
+    Symbol(std::string sym)
+        : symbol(sym)
+    {
+    }
+
+    Symbol(std::string sym, std::vector<ListIndex> indices)
         : symbol(sym), indices(indices)
-    {}
+    {
+    }
 
     std::string to_string()
     {
@@ -71,7 +81,8 @@ enum class TokenType {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
-    ASSIGN
+    ASSIGN,
+    COMMA
 };
 
 std::string get_token_type_string(TokenType type);

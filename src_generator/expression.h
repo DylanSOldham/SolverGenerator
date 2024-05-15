@@ -54,10 +54,10 @@ public:
 class NegateExpression : public Expression
 {
 public:
-    std::unique_ptr<Expression> negated_expression;
+    std::shared_ptr<Expression> negated_expression;
 
-    NegateExpression(std::unique_ptr<Expression>&& negated_expression)
-        : negated_expression(std::move(negated_expression))
+    NegateExpression(std::shared_ptr<Expression> negated_expression)
+        : negated_expression(negated_expression)
     {}
 
     virtual std::string generate(System& system)
@@ -71,11 +71,11 @@ public:
 class AddExpression : public Expression
 {
 public:
-    std::unique_ptr<Expression> lhs;
-    std::unique_ptr<Expression> rhs;
+    std::shared_ptr<Expression> lhs;
+    std::shared_ptr<Expression> rhs;
 
-    AddExpression(std::unique_ptr<Expression>&& lhs, std::unique_ptr<Expression>&& rhs)
-        : lhs(std::move(lhs)), rhs(std::move(rhs))
+    AddExpression(std::shared_ptr<Expression> lhs, std::shared_ptr<Expression> rhs)
+        : lhs(lhs), rhs(rhs)
     {}
 
     virtual std::string generate(System& system);
@@ -84,11 +84,11 @@ public:
 class SubtractExpression : public Expression
 {
 public:
-    std::unique_ptr<Expression> lhs;
-    std::unique_ptr<Expression> rhs;
+    std::shared_ptr<Expression> lhs;
+    std::shared_ptr<Expression> rhs;
 
-    SubtractExpression(std::unique_ptr<Expression>&& lhs, std::unique_ptr<Expression>&& rhs)
-        : lhs(std::move(lhs)), rhs(std::move(rhs))
+    SubtractExpression(std::shared_ptr<Expression> lhs, std::shared_ptr<Expression> rhs)
+        : lhs(lhs), rhs(rhs)
     {}
 
     virtual std::string generate(System& system);
@@ -97,11 +97,11 @@ public:
 class MultiplyExpression : public Expression
 {
 public:
-    std::unique_ptr<Expression> lhs;
-    std::unique_ptr<Expression> rhs;
+    std::shared_ptr<Expression> lhs;
+    std::shared_ptr<Expression> rhs;
 
-    MultiplyExpression(std::unique_ptr<Expression>&& lhs, std::unique_ptr<Expression>&& rhs)
-        : lhs(std::move(lhs)), rhs(std::move(rhs))
+    MultiplyExpression(std::shared_ptr<Expression> lhs, std::shared_ptr<Expression> rhs)
+        : lhs(lhs), rhs(rhs)
     {}
 
     virtual std::string generate(System& system);
@@ -110,11 +110,11 @@ public:
 class DivideExpression : public Expression
 {
 public:
-    std::unique_ptr<Expression> lhs;
-    std::unique_ptr<Expression> rhs;
+    std::shared_ptr<Expression> lhs;
+    std::shared_ptr<Expression> rhs;
 
-    DivideExpression(std::unique_ptr<Expression>&& lhs, std::unique_ptr<Expression>&& rhs)
-        : lhs(std::move(lhs)), rhs(std::move(rhs))
+    DivideExpression(std::shared_ptr<Expression> lhs, std::shared_ptr<Expression> rhs)
+        : lhs(lhs), rhs(rhs)
     {}
 
     virtual std::string generate(System& system);

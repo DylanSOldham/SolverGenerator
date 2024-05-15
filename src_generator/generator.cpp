@@ -162,7 +162,7 @@ std::string generate_initial_state_setter(System& system)
     {
         if (initial_states[i].symbol.is_list())
         {
-            if (initial_states[i].symbol.indices[0].type == IndexType::NUMBER)
+            if (initial_states[i].symbol.indices[0].type == IndexType::EXPRESSION)
                 continue;
 
             str << generate_setter_list(system, initial_states[i]);
@@ -179,11 +179,12 @@ std::string generate_initial_state_setter(System& system)
     // Second pass to define manual overrides to the list
     for (size_t i = 0; i < initial_states.size(); ++i)
     {
-        if (initial_states[i].symbol.is_list() && initial_states[i].symbol.indices[0].type == IndexType::NUMBER)
+        if (initial_states[i].symbol.is_list() && initial_states[i].symbol.indices[0].type == IndexType::EXPRESSION)
         {
             system.list_bindings.clear();
-            str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_START + " 
-                << initial_states[i].symbol.indices[0].index_start << "] = " << initial_states[i].rhs->generate(system) << ";\n";
+            str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_START + (size_t)" 
+                << "(" << initial_states[i].symbol.indices[0].expression->generate(system) << " - 1)" << "] = " 
+                << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
 
@@ -202,7 +203,7 @@ std::string generate_derivative_definitions(System& system)
     {
         if (deps[i].symbol.is_list())
         {
-            if (deps[i].symbol.indices[0].type == IndexType::NUMBER)
+            if (deps[i].symbol.indices[0].type == IndexType::EXPRESSION)
                 continue;
 
             str << generate_derivative_list(system, deps[i]);
@@ -218,10 +219,10 @@ std::string generate_derivative_definitions(System& system)
     // Second pass to define manual overrides to the list
     for (size_t i = 0; i < deps.size(); ++i)
     {
-        if (deps[i].symbol.is_list() && deps[i].symbol.indices[0].type == IndexType::NUMBER)
+        if (deps[i].symbol.is_list() && deps[i].symbol.indices[0].type == IndexType::EXPRESSION)
         {
             system.list_bindings.clear();
-            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_START + " << deps[i].symbol.indices[0].index_start - 1
+            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_START + (size_t)" << deps[i].symbol.indices[0].index_start - 1
                 << "] = " << deps[i].rhs->generate(system) << ";\n";
         }
     }

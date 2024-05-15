@@ -36,50 +36,6 @@ TEST(Tokenize, IndexedDerivativeToken)
     EXPECT_EQ(tokens[0].symbol.value().indices[2].list_symbol.value(), std::string("z"));
 }
 
-TEST(Tokenize, IndexedSymbolToken0) 
-{
-    std::string text = "D(q)";
-    std::vector<Token> tokens = tokenize(text);
-
-    EXPECT_EQ(tokens.size(), 1);
-    EXPECT_EQ(tokens[0].type, TokenType::SYMBOL);
-    EXPECT_TRUE(tokens[0].symbol.has_value());
-    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D"));
-    EXPECT_TRUE(tokens[0].symbol.value().is_list());
-    EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
-    EXPECT_TRUE(tokens[0].symbol.value().indices[0].type == IndexType::VARIABLE);
-    EXPECT_EQ(tokens[0].symbol.value().indices[0].list_symbol.value(), std::string("q"));
-}
-
-TEST(Tokenize, IndexedSymbolToken1) 
-{
-    std::string text = "D(1)";
-    std::vector<Token> tokens = tokenize(text);
-
-    EXPECT_EQ(tokens.size(), 1);
-    EXPECT_EQ(tokens[0].type, TokenType::SYMBOL);
-    EXPECT_TRUE(tokens[0].symbol.has_value());
-    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D"));
-    EXPECT_TRUE(tokens[0].symbol.value().is_list());
-    EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
-    EXPECT_TRUE(tokens[0].symbol.value().indices[0].type == IndexType::NUMBER);
-    EXPECT_EQ(tokens[0].symbol.value().indices[0].index_start, 1);
-}
-
-TEST(Tokenize, InitialIndexedSymbolToken) 
-{
-    std::string text = "D_0(q)";
-    std::vector<Token> tokens = tokenize(text);
-
-    EXPECT_EQ(tokens.size(), 1);
-    EXPECT_EQ(tokens[0].type, TokenType::SYMBOL);
-    EXPECT_TRUE(tokens[0].symbol.has_value());
-    EXPECT_EQ(tokens[0].symbol.value().symbol, std::string("D_0"));
-    EXPECT_TRUE(tokens[0].symbol.value().is_list());
-    EXPECT_EQ(tokens[0].symbol.value().indices.size(), 1);
-    EXPECT_EQ(tokens[0].symbol.value().indices[0].list_symbol.value(), std::string("q"));
-}
-
 TEST(Tokenize, ListToken) 
 {
     std::string text = "1 .. 3";
@@ -109,7 +65,7 @@ TEST(Parse, AddExpression)
 {
     std::vector<Token> tokens = tokenize("A + B");
     System system;
-    std::unique_ptr<Expression> expr = parse_expression(tokens);
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
 
@@ -127,7 +83,7 @@ TEST(Parse, SubtractExpression)
 {
     std::vector<Token> tokens = tokenize("A - B");
     System system;
-    std::unique_ptr<Expression> expr = parse_expression(tokens);
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     ASSERT_EQ(typeid(*expr.get()), typeid(SubtractExpression));
 
@@ -144,7 +100,7 @@ TEST(Parse, SubtractExpression)
 TEST(Parse, TrickyNegate)
 {
     std::vector<Token> tokens = tokenize("- A + B");
-    std::unique_ptr<Expression> expr = parse_expression(tokens);
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
 
@@ -164,7 +120,7 @@ TEST(Parse, TrickyNegate)
 TEST(Parse, NegateAndDivide)
 {
     std::vector<Token> tokens = tokenize("- A / B");
-    std::unique_ptr<Expression> expr = parse_expression(tokens);
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     ASSERT_EQ(typeid(*expr.get()), typeid(NegateExpression));
 
@@ -179,4 +135,43 @@ TEST(Parse, NegateAndDivide)
 
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(divexpr.rhs.get());
     ASSERT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+}
+
+TEST(Parse, IndexedSymbol)
+{
+    std::vector<Token> tokens = tokenize("G_0(1, n, q+3) = C");
+
+    System system;
+    parse_initial_value(system, tokens);
+
+    ASSERT_EQ(system.initial_states.size(), 1);
+    ASSERT_EQ(system.initial_states[0].symbol.indices.size(), 3);
+
+    auto& indices = system.initial_states[0].symbol.indices;
+    ASSERT_EQ(indices[0].type, IndexType::EXPRESSION);
+    ASSERT_EQ(indices[1].type, IndexType::VARIABLE);
+    ASSERT_EQ(indices[2].type, IndexType::EXPRESSION);
+    ASSERT_TRUE(dynamic_cast<AddExpression*>(indices[2].expression.get()));
+}
+
+TEST(Parse, IndexedExpression)
+{
+    std::vector<Token> tokens = tokenize("dG/dt = -C(1, n, g - 1)");
+
+    System system;
+    parse_state_definition(system, tokens);
+
+    ASSERT_EQ(system.state_variables.size(), 1);
+
+    NegateExpression* negated_expr = dynamic_cast<NegateExpression*>(system.state_variables[0].rhs.get());
+    ASSERT_TRUE(negated_expr);
+    SymbolExpression* sym_expr = dynamic_cast<SymbolExpression*>(negated_expr->negated_expression.get());
+    ASSERT_TRUE(sym_expr);
+    ASSERT_EQ(sym_expr->symbol.indices.size(), 3);
+
+    auto& indices = sym_expr->symbol.indices;
+    ASSERT_EQ(indices[0].type, IndexType::EXPRESSION);
+    ASSERT_EQ(indices[1].type, IndexType::VARIABLE);
+    ASSERT_EQ(indices[2].type, IndexType::EXPRESSION);
+    ASSERT_TRUE(dynamic_cast<SubtractExpression*>(indices[2].expression.get()));
 }

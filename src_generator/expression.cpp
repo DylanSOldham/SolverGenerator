@@ -25,10 +25,9 @@ std::string SymbolExpression::generate(System& system)
                     }
                     }
                 break;
-                case IndexType::NUMBER:
+                case IndexType::EXPRESSION:
                     {
-                    size_t i = list_index.index_start;
-                    str << "values[INDEX_" << symbol.to_string() << "_START + " << i << "]";
+                    str << "values[INDEX_" << symbol.to_string() << "_START + (size_t)" << list_index.expression->generate(system) << "]";
                     }
                 break;
                 default:

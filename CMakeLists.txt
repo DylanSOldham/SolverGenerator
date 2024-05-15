@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.5.0)
 project(DiffEqSolverTest)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 find_package(SUNDIALS REQUIRED)
 

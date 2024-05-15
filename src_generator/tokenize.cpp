@@ -1,4 +1,10 @@
 #include "tokenize.h"
+#include "expression.h"
+
+ListIndex::~ListIndex()
+{
+
+}
 
 std::string get_token_type_string(TokenType type)
 {
@@ -15,6 +21,7 @@ std::string get_token_type_string(TokenType type)
         case TokenType::MULTIPLY: return "MULTIPLY";
         case TokenType::DIVIDE: return "DIVIDE";
         case TokenType::ASSIGN: return "ASSIGN";
+        case TokenType::COMMA: return "COMMA";
         default: return "UNKNOWN";
     }
 }
@@ -28,7 +35,7 @@ std::vector<ListIndex> get_indices(std::string indexList)
         if (std::regex_search(indexList, matches, std::regex("^,? ?([0-9]+)")))
         {
             indices.push_back(ListIndex());
-            indices.back().type = IndexType::NUMBER;
+            indices.back().type = IndexType::EXPRESSION;
             indices.back().index_start = std::stoi(matches[1]);
             indices.back().index_end = indices.back().index_start;
             indexList = indexList.substr(matches[0].str().size());
@@ -74,6 +81,12 @@ std::vector<Token> tokenize(std::string line)
             continue;
         }
 
+        if (std::regex_search(line, matches, std::regex("^,"))) {
+            tokens.push_back(Token { TokenType::COMMA });
+            line = line.substr(1);
+            continue;
+        }
+
         if (std::regex_search(line, matches, std::regex("^\\+"))) {
             tokens.push_back(Token { TokenType::ADD });
             line = line.substr(1);
@@ -107,12 +120,6 @@ std::vector<Token> tokenize(std::string line)
         if (std::regex_search(line, matches, std::regex("^\\)"))) {
             tokens.push_back(Token { TokenType::RPAREN });
             line = line.substr(1);
-            continue;
-        }
-        
-        if (std::regex_search(line, matches, std::regex("^([A-Za-z_][A-Za-z_0-9]*)\\((.*)\\)"))) {
-            tokens.push_back(Token { TokenType::SYMBOL, Symbol(matches[1].str(), get_indices(matches[2].str())) });
-            line = line.substr(matches[0].str().size());
             continue;
         }
 

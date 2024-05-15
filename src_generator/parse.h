@@ -13,16 +13,16 @@
 struct StateVariable
 {
     Symbol symbol;
-    std::unique_ptr<Expression> rhs;
+    std::shared_ptr<Expression> rhs;
 
-    StateVariable(Symbol symbol, std::unique_ptr<Expression> rhs) 
+    StateVariable(Symbol symbol, std::shared_ptr<Expression> rhs) 
         : symbol(symbol), rhs(std::move(rhs)) {}
 };
 
 struct InitialState
 {
     Symbol symbol;
-    std::unique_ptr<Expression> rhs;
+    std::shared_ptr<Expression> rhs;
 };
 
 struct System
@@ -52,7 +52,7 @@ struct System
     }
 };
 
-std::unique_ptr<Expression> parse_expression(std::vector<Token> tokens);
+std::shared_ptr<Expression> parse_expression(std::vector<Token> tokens);
 
 void parse_state_definition(System& system, std::vector<Token> tokens);
 
