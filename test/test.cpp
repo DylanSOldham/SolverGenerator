@@ -169,9 +169,6 @@ TEST(Parse, OrderOfOperations)
     std::vector<Token> tokens = tokenize("A + B * C ^ D * E + F");
     std::shared_ptr<Expression> expr = parse_expression(tokens);
 
-    System system;
-    std::cerr << expr->generate(system) << '\n';
-
     ASSERT_EQ(typeid(*expr.get()), typeid(AddExpression));
     AddExpression add_expr_1 = *dynamic_cast<AddExpression*>(expr.get());
 
@@ -200,6 +197,26 @@ TEST(Parse, Sqrt)
 
     ConstantExpression& constant_expression = *dynamic_cast<ConstantExpression*>(sqrtexpr.base.get());
     ASSERT_EQ(constant_expression.value, 7);
+}
+
+TEST(Parse, ScientificNotation)
+{
+    std::vector<Token> tokens = tokenize("10 ^ -3");
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
+
+    ASSERT_EQ(typeid(*expr.get()), typeid(ExponentExpression));
+
+    ExponentExpression& exp_expr = *dynamic_cast<ExponentExpression*>(expr.get());
+    ASSERT_EQ(typeid(*exp_expr.base.get()), typeid(ConstantExpression));
+    ASSERT_EQ(typeid(*exp_expr.exp.get()), typeid(NegateExpression));
+
+    ConstantExpression& base_expression = *dynamic_cast<ConstantExpression*>(exp_expr.base.get());
+    ASSERT_EQ(base_expression.value, 10);
+
+    NegateExpression& exp_expression = *dynamic_cast<NegateExpression*>(exp_expr.exp.get());
+
+    ConstantExpression& negated_expression = *dynamic_cast<ConstantExpression*>(exp_expression.negated_expression.get());
+    ASSERT_EQ(negated_expression.value, 3);
 }
 
 TEST(Parse, NegateAndDivide)

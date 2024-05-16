@@ -39,6 +39,7 @@ dislocation_density_evolution = 300.
 # MASTER EQUATIONS
 
 # dCi(n)/dt = i_gain(n)
+# dCi(1)/dt = i_gain(1)
 
 dRho/dt = dislocation_gain - dislocation_density_evolution * burgers_vector^2 * Rho^(3/2)
 INITIAL Rho = dislocation_density_0

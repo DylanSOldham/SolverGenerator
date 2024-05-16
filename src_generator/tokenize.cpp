@@ -101,7 +101,15 @@ std::vector<Token> tokenize(std::string line)
         }
 
         if (std::regex_search(line, matches, std::regex("^\\-"))) {
-            tokens.push_back(Token { TokenType::SUBTRACT });
+            if (tokens.size() > 0 && (tokens.back().type == TokenType::CONSTANT 
+                || tokens.back().type == TokenType::SYMBOL || tokens.back().type == TokenType::RPAREN))
+            {
+                tokens.push_back(Token { TokenType::SUBTRACT });
+            }
+            else
+            {
+                tokens.push_back(Token { TokenType::NEGATE });
+            }
             line = line.substr(1);
             continue;
         }

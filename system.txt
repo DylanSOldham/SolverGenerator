@@ -1,7 +1,7 @@
-C_0 = C - 1
+T = 1.0
 
 dC/dt = G
-INITIAL C = C_0
+INITIAL C = T
 
 dG/dt = -C
 INITIAL G = -50.0

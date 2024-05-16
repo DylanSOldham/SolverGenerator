@@ -145,6 +145,12 @@ std::string generate_expression_functions(System &system)
         auto symbol = p.first;
         std::shared_ptr<Expression> expression = p.second;
 
+        if (!expression)
+        {
+            std::cerr << "Error: " << symbol << " is missing definition.\n";
+            continue;
+        }
+
         str << "\n\ndouble " << symbol << "()\n"
             << "{\n"
             << "    return " << expression->generate(system) << ";\n"
@@ -194,6 +200,12 @@ std::string generate_initial_state_setter(System &system)
         }
         else
         {
+            if (!initial_states[i].rhs)
+            {
+                std::cerr << "Error: Initial state of " << initial_states[i].symbol.symbol << " is missing definition.\n";
+                continue;
+            }
+
             system.list_bindings.clear();
             str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "] = " << initial_states[i].rhs->generate(system) << ";\n";
         }

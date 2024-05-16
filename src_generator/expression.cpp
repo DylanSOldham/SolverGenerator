@@ -108,6 +108,16 @@ std::string DivideExpression::generate(System& system)
 
 std::string ExponentExpression::generate(System& system)
 {
+    if (!base) {
+        std::cerr << "Error: Exponent expression is missing base." << std::endl;
+        return "";
+    }
+
+    if (!exp) {
+        std::cerr << "Error: Exponent expression is missing exponent." << std::endl;
+        return "";
+    }
+
     std::stringstream code;
     code << "std::pow(" << base->generate(system) << ", " << exp->generate(system) << ")";
     return code.str();

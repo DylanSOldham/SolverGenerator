@@ -63,8 +63,14 @@ std::vector<Token> pop_subexpr_tokens(std::vector<Token>& tokens, Priority prior
         if (it->type == TokenType::RPAREN) paren_level -= 1;
         if (paren_level > 0) continue;
 
-        if (priority >= Priority::PRIORITY_ADD && (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT)) 
+        if (priority >= Priority::PRIORITY_ADD && (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT))
+        {
+            // Special exception allowing negate expressions to be alone in exponents
+            if (priority == Priority::PRIORITY_EXP && it == tokens.begin() + 1 && it->type == TokenType::SUBTRACT)
+                continue;
+
             break;
+        }
 
         if (priority >= Priority::PRIORITY_MUL && (it->type == TokenType::MULTIPLY || it->type == TokenType::DIVIDE)) 
             break;
@@ -74,10 +80,6 @@ std::vector<Token> pop_subexpr_tokens(std::vector<Token>& tokens, Priority prior
     }
 
     auto subexpr_tokens = std::vector<Token>(tokens.begin(), it);
-
-    for (auto t : subexpr_tokens)
-        std::cerr << t.to_string() << " ";
-    std::cerr << std::endl;
 
     tokens.erase(tokens.begin(), it);
     return subexpr_tokens;
@@ -121,15 +123,9 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
                 expression = std::make_shared<AddExpression>(expression, parse_expression(subexprTokens));
                 continue;
             case TokenType::SUBTRACT:
-                if (expression) 
-                {
-                    tokens.erase(tokens.begin());
-                    subexprTokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_ADD);
-                    expression = std::make_shared<SubtractExpression>(expression, parse_expression(subexprTokens));
-                } else
-                {
-                    expression = std::make_shared<NegateExpression>(parse_unary_expression(tokens));
-                }
+                tokens.erase(tokens.begin());
+                subexprTokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_ADD);
+                expression = std::make_shared<SubtractExpression>(expression, parse_expression(subexprTokens));
                 continue;
             case TokenType::MULTIPLY:
                 tokens.erase(tokens.begin());
@@ -145,6 +141,9 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
                 tokens.erase(tokens.begin());
                 subexprTokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_EXP);
                 expression = std::make_unique<ExponentExpression>(expression, parse_expression(subexprTokens));
+                continue;
+            case TokenType::NEGATE:
+                expression = std::make_shared<NegateExpression>(parse_unary_expression(tokens));
                 continue;
             case TokenType::SQRT:
                 {
@@ -228,7 +227,7 @@ void parse_initial_value(System& system, std::vector<Token> tokens)
         std::cerr << "Error: Malformed expression for initial value of " << symbol.symbol << "\n";
         return;
     }
-    system.initial_states.push_back(InitialState { symbol, parse_expression(tokens) });
+    system.initial_states.push_back(InitialState { symbol, expression });
 }
 
 void parse_expression_declaration(System& system, std::vector<Token> tokens)
@@ -241,7 +240,7 @@ void parse_expression_declaration(System& system, std::vector<Token> tokens)
         std::cerr << "Malformed expression: " << symbol.symbol << "\n";
         return;
     }
-    system.expression_definitions[symbol.symbol] = parse_expression(tokens);
+    system.expression_definitions[symbol.symbol] = expression;
 }
 
 void parse_symbol_declaration(System& system, std::vector<Token> tokens) 
@@ -253,7 +252,7 @@ void parse_symbol_declaration(System& system, std::vector<Token> tokens)
        system.state_lists.emplace(symbol.symbol, tokens[2].list_size);
        return;
     }
-        
+
     parse_expression_declaration(system, tokens);
     return;
 }
