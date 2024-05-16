@@ -121,10 +121,10 @@ std::string generate_csv_list(System &system, Symbol state_symbol)
     std::stringstream str;
 
     size_t list_size = system.state_lists[list_symbol];
-    for (size_t i = 0; i < list_size; ++i)
-    {
-        str << ", " << state_symbol.to_string() << "[" << i + 1 << "]";
-    }
+    str << "\n\tfor (size_t i = 0; i < " << list_size << "; ++i)";
+    str << "\n\t{";
+        str << "\n\t\tstr << \", " << state_symbol.to_string() << "[\" << i + 1 << \"]\";";
+    str << "\n\t}\n";
 
     return str.str();
 }
@@ -313,9 +313,10 @@ std::string generate_state_csv_label_getter(System &system)
 
     auto &deps = system.state_variables;
 
-    str << "std::string get_state_csv_label() {\n";
+    str << "std::string get_state_csv_label() {";
 
-    str << "    return \"t (seconds)";
+    str << "\n\tstd::stringstream str; "
+        << "\n\tstr << \"t (seconds)\";";
     for (size_t i = 0; i < deps.size(); ++i)
     {
         if (deps[i].symbol.is_list())
@@ -324,12 +325,12 @@ std::string generate_state_csv_label_getter(System &system)
         }
         else
         {
-            str << ", " << deps[i].symbol.to_string();
+            str << "\n\tstr << \", " << deps[i].symbol.to_string() << "\";";
         }
     }
-    str << "\\n\";\n";
+    str << "\n\treturn str.str();";
 
-    str << "}\n\n";
+    str << "\n}\n\n";
 
     return str.str();
 }
@@ -360,7 +361,8 @@ int main(int argc, char **argv)
 
     std::ofstream outmodule("generated/system.h", std::ios::out);
     outmodule << "#include <cmath>\n"
-              << "#include <nvector/nvector_serial.h>\n\n"
+              << "#include <nvector/nvector_serial.h>\n"
+              << "#include <sstream>\n\n"
               << generate_state_indices(system)
               << "#define NUM_DEPS " << system.max_index << "\n"
               << generate_constant_definitions(system)

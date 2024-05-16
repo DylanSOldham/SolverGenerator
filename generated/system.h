@@ -1,5 +1,6 @@
 #include <cmath>
 #include <nvector/nvector_serial.h>
+#include <sstream>
 
 #define INDEX_C_START 0
 #define INDEX_C_SIZE 10
@@ -26,7 +27,15 @@ void get_initial_state(N_Vector state) {
 }
 
 std::string get_state_csv_label() {
-    return "t (seconds), C[1], C[2], C[3], C[4], C[5], C[6], C[7], C[8], C[9], C[10], G\n";
+	std::stringstream str; 
+	str << "t (seconds)";
+	for (size_t i = 0; i < 10; ++i)
+	{
+		str << ", C[" << i + 1 << "]";
+	}
+
+	str << ", G";
+	return str.str();
 }
 
 int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
