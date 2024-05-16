@@ -123,7 +123,7 @@ std::string generate_csv_list(System &system, Symbol state_symbol)
     size_t list_size = system.state_lists[list_symbol];
     for (size_t i = 0; i < list_size; ++i)
     {
-        str << ", " << state_symbol.to_string() << "(" << i + 1 << ")";
+        str << ", " << state_symbol.to_string() << "[" << i + 1 << "]";
     }
 
     return str.str();
@@ -257,8 +257,8 @@ std::string generate_derivative_definitions(System &system)
         if (deps[i].symbol.is_list() && deps[i].symbol.indices[0].type == IndexType::EXPRESSION)
         {
             system.list_bindings.clear();
-            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_START + (size_t)" << deps[i].symbol.indices[0].index_start - 1
-                << "] = " << deps[i].rhs->generate(system) << ";\n";
+            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_START + (size_t)(" << deps[i].symbol.indices[0].expression->generate(system)
+                << " - 1)] = " << deps[i].rhs->generate(system) << ";\n";
         }
     }
 

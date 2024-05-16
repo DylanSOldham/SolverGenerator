@@ -3,14 +3,17 @@
 std::vector<ListIndex> parse_indices(std::vector<Token> tokens);
 
 Symbol parse_symbol(std::vector<Token>& tokens)
-{
+{   
     Symbol symbol = tokens[0].symbol.value();
     std::vector<ListIndex> indices;
-
-    if (tokens[1].type == TokenType::LPAREN)
+    
+    if (tokens[1].type == TokenType::LBRACKET)
     {
-        auto end_it = std::find_if(tokens.begin() + 1, tokens.end(), [](Token token){ return token.type == TokenType::RPAREN; });
-        if (end_it == tokens.end()) return symbol;
+        auto end_it = std::find_if(tokens.begin() + 1, tokens.end(), [](Token token){ return token.type == TokenType::RBRACKET; });
+        if (end_it == tokens.end()) {
+            tokens.clear();
+            return symbol;
+        }
 
         std::vector<Token> indices_tokens = std::vector<Token>(tokens.begin() + 2, end_it);
 
@@ -56,12 +59,17 @@ std::vector<Token> pop_subexpr_tokens(std::vector<Token>& tokens, Priority prior
     // 0 = stop on nothing 
 
     size_t paren_level = 0;
+    size_t bracket_level = 0;
     auto it = tokens.begin();
     for (; it != tokens.end(); ++it) 
     {
         if (it->type == TokenType::LPAREN) paren_level += 1;
         if (it->type == TokenType::RPAREN) paren_level -= 1;
         if (paren_level > 0) continue;
+
+        if (it->type == TokenType::LBRACKET) bracket_level += 1;
+        if (it->type == TokenType::RBRACKET) bracket_level -= 1;
+        if (bracket_level > 0) continue;
 
         if (priority >= Priority::PRIORITY_ADD && (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT))
         {
@@ -197,19 +205,21 @@ std::vector<ListIndex> parse_indices(std::vector<Token> tokens)
 
 void parse_state_definition(System& system, std::vector<Token> tokens)
 {
-    if (!tokens[0].symbol.has_value()) 
+    if (tokens.size() < 2 || !tokens[1].symbol.has_value()) 
     {
         std::cerr << "Error: Derivative is missing symbol.\n";
         return;
     }
 
-    Symbol symbol = tokens[0].symbol.value();
-    tokens.erase(tokens.begin(), tokens.begin() + 2);
+    tokens.erase(tokens.begin()); // Remove the derivative token
+    Symbol symbol = parse_symbol(tokens);
+    tokens.erase(tokens.begin()); // Remove the = token
 
     std::shared_ptr<Expression> rhs = parse_expression(tokens);
     if (!rhs)
     {
         std::cerr << "Error: Malformed rhs expression for derivative of " << symbol.symbol << "\n";
+        return;
     }
 
     system.state_variables.push_back(StateVariable(symbol, std::move(rhs)));

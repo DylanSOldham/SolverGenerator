@@ -15,8 +15,7 @@ std::string SymbolExpression::generate(System& system)
                     {
                     if (system.list_bindings.count(list_index.list_symbol.value()))
                     {
-                        size_t i = system.list_bindings[list_index.list_symbol.value()];
-                        str << "values[INDEX_" << symbol.to_string() << "_START + " << i << "]";
+                        str << "values[INDEX_" << symbol.to_string() << "_START + (" << list_index.list_symbol.value() << " - 1)]";
                     }
                     else
                     {
@@ -27,7 +26,7 @@ std::string SymbolExpression::generate(System& system)
                 break;
                 case IndexType::EXPRESSION:
                     {
-                    str << "values[INDEX_" << symbol.to_string() << "_START + (size_t)" << list_index.expression->generate(system) << "]";
+                    str << "values[INDEX_" << symbol.to_string() << "_START + (size_t)(" << list_index.expression->generate(system) << " - 1)]";
                     }
                 break;
                 default:

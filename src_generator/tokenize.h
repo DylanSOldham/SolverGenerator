@@ -65,6 +65,8 @@ enum class TokenType {
     INITIAL,
     LPAREN,
     RPAREN,
+    LBRACKET,
+    RBRACKET,
     ADD,
     SUBTRACT,
     MULTIPLY,

@@ -1,7 +1,9 @@
 T = 1.0
 
-dC/dt = G
-INITIAL C = T
+n = 1 .. 10
+d/dt C[n] = -G + n
+d/dt C[1] = -G
+INITIAL C[n] = T + n
 
-dG/dt = -C
-INITIAL G = -50.0
+d/dt G = C[1]
+INITIAL G = -5.0

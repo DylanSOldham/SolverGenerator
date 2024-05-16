@@ -17,12 +17,15 @@ std::string get_token_type_string(TokenType type)
         case TokenType::INITIAL: return "INITIAL";
         case TokenType::LPAREN: return "LPAREN";
         case TokenType::RPAREN: return "RPAREN";
+        case TokenType::LBRACKET: return "LBRACKET";
+        case TokenType::RBRACKET: return "RBRACKET";
         case TokenType::ADD: return "ADD";
         case TokenType::SUBTRACT: return "SUBTRACT";
         case TokenType::MULTIPLY: return "MULTIPLY";
         case TokenType::DIVIDE: return "DIVIDE";
         case TokenType::EXPONENT: return "EXPONENT";
         case TokenType::SQRT: return "SQRT";
+        case TokenType::NEGATE: return "NEGATE";
         case TokenType::ASSIGN: return "ASSIGN";
         case TokenType::COMMA: return "COMMA";
         default: return "UNKNOWN";
@@ -65,21 +68,14 @@ std::vector<Token> tokenize(std::string line)
 
     while (line.size() > 0) {
         
-        if (std::regex_search(line, matches, std::regex("^d(.*)\\((.*)\\)/dt"))) {
-            tokens.push_back(Token { TokenType::DERIVATIVE, Symbol(matches[1].str(), get_indices(matches[2].str())), std::nullopt });
-            line = line.substr(matches[0].str().size());
-            continue;
-        }
-        
-        if (std::regex_search(line, matches, std::regex("^d(.*)/dt"))) {
-            std::string symbol = matches[1].str();
-            tokens.push_back(Token { TokenType::DERIVATIVE, Symbol(symbol) });
-            line = line.substr(matches[0].str().size());
-            continue;
-        }
-        
         if (std::regex_search(line, matches, std::regex("^#"))) {
             break;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^d/dt"))) {
+            tokens.push_back(Token { TokenType::DERIVATIVE });
+            line = line.substr(matches[0].str().size());
+            continue;
         }
         
         if (std::regex_search(line, matches, std::regex("^="))) {
@@ -152,6 +148,18 @@ std::vector<Token> tokenize(std::string line)
 
         if (std::regex_search(line, matches, std::regex("^\\)"))) {
             tokens.push_back(Token { TokenType::RPAREN });
+            line = line.substr(1);
+            continue;
+        }
+
+        if (std::regex_search(line, matches, std::regex("^\\["))) {
+            tokens.push_back(Token { TokenType::LBRACKET });
+            line = line.substr(1);
+            continue;
+        }
+
+        if (std::regex_search(line, matches, std::regex("^\\]"))) {
+            tokens.push_back(Token { TokenType::RBRACKET });
             line = line.substr(1);
             continue;
         }
