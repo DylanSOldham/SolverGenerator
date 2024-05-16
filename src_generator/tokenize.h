@@ -9,7 +9,7 @@
 #include <sstream>
 #include <regex>
 
-enum class IndexType
+enum class ParameterType
 {
     VARIABLE,
     EXPRESSION
@@ -17,43 +17,54 @@ enum class IndexType
 
 class Expression;
 
-struct ListIndex {
-    IndexType type;
-    std::optional<std::string> list_symbol;
+struct Parameter {
+    ParameterType type;
+    std::optional<std::string> symbol;
     std::shared_ptr<Expression> expression = nullptr;
     size_t index_start = -1;
     size_t index_end = -2;
 
-    ~ListIndex();
+    ~Parameter();
+};
+
+enum class SymbolType 
+{
+    UNRESOLVED,
+    STATE,
+    CONSTANT,
+    FUNCTION,
+    PARAMETER
 };
 
 struct Symbol
 {
-    std::string symbol;
-    std::vector<ListIndex> indices;
+    std::string name;
+    std::vector<Parameter> parameters;
+    SymbolType type = SymbolType::UNRESOLVED;
 
     Symbol(std::string sym)
-        : symbol(sym)
+        : name(sym)
     {
     }
 
-    Symbol(std::string sym, std::vector<ListIndex> indices)
-        : symbol(sym), indices(indices)
+    Symbol(std::string sym, std::vector<Parameter> parameters)
+        : name(sym), parameters(parameters)
     {
     }
 
     std::string to_string()
     {
-        return symbol;
+        return name;
     }
 
     bool operator==(const Symbol& op)
     {
-        return op.symbol == symbol;
+        return op.name == name;
     }
 
-    bool is_list() {
-        return indices.size() != 0;
+    bool is_list()
+    {
+        return type == SymbolType::STATE && parameters.size() > 0;
     }
 };
 

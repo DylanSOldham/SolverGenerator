@@ -1,68 +1,84 @@
 #include "expression.h"
 #include "parse.h"
 
+std::string generate_parameter_value(System& system, Parameter& parameter)
+{
+    std::stringstream str;
+    switch(parameter.type)
+    {
+        case ParameterType::VARIABLE:
+            {
+            if (system.bound_parameters.count(parameter.symbol.value()))
+            {
+                str << "(" << parameter.symbol.value() << ")";
+            }
+            else
+            {
+                std::cerr << "Error: Tried to use unbound index variable in definition.\n";
+                return "";
+            }
+            }
+        break;
+        case ParameterType::EXPRESSION:
+            {
+            str << "(" << parameter.expression->generate(system) << ")";
+            }
+        break;
+        default:
+        break;
+    }
+
+    return str.str();
+}
+
 std::string SymbolExpression::generate(System& system)
 {
     std::stringstream str;
 
     SymbolType type = system.resolve_symbol_type(symbol);
-    if (type == SymbolType::STATE) {
-        if (symbol.is_list()) {
-            auto& list_index = symbol.indices[0];
-            switch(list_index.type)
-            {
-                case IndexType::VARIABLE:
-                    {
-                    if (system.list_bindings.count(list_index.list_symbol.value()))
-                    {
-                        str << "values[INDEX_" << symbol.to_string() << "_START + (" << list_index.list_symbol.value() << " - 1)]";
-                    }
-                    else
-                    {
-                        std::cerr << "Error: Tried to use unbound index variable in definition.\n";
-                        return "";
-                    }
-                    }
-                break;
-                case IndexType::EXPRESSION:
-                    {
-                    str << "values[INDEX_" << symbol.to_string() << "_START + (size_t)(" << list_index.expression->generate(system) << " - 1)]";
-                    }
-                break;
-                default:
-                break;
+    switch (type) 
+    {
+        case SymbolType::STATE:
+            if (symbol.parameters.size() > 0) {
+                auto& parameter = symbol.parameters[0];
+                str << "values[INDEX_" << symbol.to_string() << "_START + " << generate_parameter_value(system, parameter) << " - 1]";
+                return str.str();
             }
-        }
-        else 
-        {
+
             str << "values[INDEX_" << symbol.to_string() << "]";
-        }  
-
-        return str.str();
-    }
-
-    if (type == SymbolType::LIST_INDEX)
-    {
-        if (!system.list_bindings.count(symbol.to_string()))
-        {
-            std::cerr << "Error: Used an unbound list index." << std::endl;
-        }
-
-        return symbol.to_string();
-    }
-
-    if (type == SymbolType::COMPOUND)
-    {
-        auto expr = system.expression_definitions[symbol.symbol];
-        if (!expr)
-        {
-            std::cerr << "Error: Expression " << symbol.symbol << " is undefined.\n";
-        }
-        return symbol.symbol + "()";
+            return str.str();
+        case SymbolType::PARAMETER:
+            if (!system.bound_parameters.count(symbol.to_string()))
+            {
+                std::cerr << "Error: Used an unbound parameter." << std::endl;
+                return "0";
+            }
+            return symbol.to_string();
+        case SymbolType::CONSTANT:
+            if (!system.constant_definitions.count(symbol.name))
+            {
+                std::cerr << "Error: Constant " << symbol.name << " is undefined.\n";
+            }
+            return symbol.to_string();
+        case SymbolType::FUNCTION:
+            if (symbol.parameters.size() < 1)
+            {
+                std::cerr << "Error: Function " << symbol.name << " with no parameters is not allowed.\n";
+                return "0";
+            }
+            for (auto& f : system.function_definitions)
+            {
+                if (f.symbol == symbol)
+                {
+                    str << symbol.to_string() << "(" << generate_parameter_value(system, symbol.parameters[0]) << ")";
+                    return str.str();
+                }
+            }
+            std::cerr << "Error: Function " << symbol.name << " is undefined.\n";
+            return "0";
     }
 
     std::cerr << "Use of undefined symbol " << symbol.to_string() << ". Make sure this is intentional.\n";
-
     return symbol.to_string();
 }
 

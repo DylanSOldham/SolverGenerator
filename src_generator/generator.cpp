@@ -11,13 +11,13 @@
 
 std::string generate_index_list(System &system, Symbol state_symbol)
 {
-    if (state_symbol.indices[0].type != IndexType::VARIABLE)
+    if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
     {
         std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl;
         return "";
     }
 
-    auto &list_symbol = state_symbol.indices[0].list_symbol.value();
+    auto &list_symbol = state_symbol.parameters[0].symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate indices for a list which doesn't exist.\n";
@@ -37,13 +37,13 @@ std::string generate_index_list(System &system, Symbol state_symbol)
 
 std::string generate_setter_list(System &system, InitialState &initial_state)
 {
-    if (initial_state.symbol.indices[0].type != IndexType::VARIABLE)
+    if (initial_state.symbol.parameters[0].type != ParameterType::VARIABLE)
     {
         std::cerr << "Error: Trying to generate indices for a non variable list index." << std::endl;
         return "";
     }
 
-    auto &list_symbol = initial_state.symbol.indices[0].list_symbol.value();
+    auto &list_symbol = initial_state.symbol.parameters[0].symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate setters for a list which doesn't exist.\n";
@@ -51,8 +51,8 @@ std::string generate_setter_list(System &system, InitialState &initial_state)
     }
 
     size_t list_size = system.state_lists[list_symbol];
-    system.list_bindings.clear();
-    system.list_bindings[list_symbol] = list_size;
+    system.bound_parameters.clear();
+    system.bound_parameters[list_symbol] = true;
 
     std::stringstream str;
 
@@ -71,13 +71,13 @@ std::string generate_setter_list(System &system, InitialState &initial_state)
 
 std::string generate_derivative_list(System &system, StateVariable &state_variable)
 {
-    if (state_variable.symbol.indices[0].type != IndexType::VARIABLE)
+    if (state_variable.symbol.parameters[0].type != ParameterType::VARIABLE)
     {
         std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl;
         return "";
     }
 
-    auto &list_symbol = state_variable.symbol.indices[0].list_symbol.value();
+    auto &list_symbol = state_variable.symbol.parameters[0].symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate derivatives for a list which doesn't exist.\n";
@@ -85,8 +85,8 @@ std::string generate_derivative_list(System &system, StateVariable &state_variab
     }
 
     size_t list_size = system.state_lists[list_symbol];
-    system.list_bindings.clear();
-    system.list_bindings[list_symbol] = list_size;
+    system.bound_parameters.clear();
+    system.bound_parameters[list_symbol] = list_size;
 
     std::stringstream str;
 
@@ -105,13 +105,13 @@ std::string generate_derivative_list(System &system, StateVariable &state_variab
 
 std::string generate_csv_list(System &system, Symbol state_symbol)
 {
-    if (state_symbol.indices[0].type != IndexType::VARIABLE)
+    if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
     {
         std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl;
         return "";
     }
 
-    auto &list_symbol = state_symbol.indices[0].list_symbol.value();
+    auto &list_symbol = state_symbol.parameters[0].symbol.value();
     if (!system.state_lists.count(list_symbol))
     {
         std::cerr << "Error: Tried to generate csv labels for a list which doesn't exist.\n";
@@ -129,29 +129,71 @@ std::string generate_csv_list(System &system, Symbol state_symbol)
     return str.str();
 }
 
+std::string generate_constant_definitions(System &system)
+{
+    std::stringstream str;
+
+    for (auto& expr : system.constant_definitions)
+    {
+        str << "\ndouble " << expr.first << " = " << expr.second->generate(system) << ";";
+    }
+
+    return str.str();
+}
+
 std::string generate_expression_functions(System &system)
 {
     std::stringstream str;
 
-    auto &bound_expressions = system.expression_definitions;
+    auto &functions = system.function_definitions;
 
-    for (auto &p : bound_expressions)
+    for (auto &f : functions)
     {
-        str << "\ndouble " << p.first << "();";
+        str << "\ndouble " << f.symbol.to_string() << "(";
+
+        bool add_comma = false;
+        for (auto& p : f.symbol.parameters)
+        {
+            if (p.type != ParameterType::VARIABLE)
+            {
+                std::cerr << "Error: Pattern matching for functions currently unsupported.\n";
+                continue;
+            }
+            str << (add_comma ? ", " : "") << " double " << p.symbol.value();
+            add_comma = true;
+        }
+
+        str << ");";
     }
 
-    for (auto &p : bound_expressions)
+    for (auto &f : functions)
     {
-        auto symbol = p.first;
-        std::shared_ptr<Expression> expression = p.second;
+        auto name = f.symbol.to_string();
+        std::shared_ptr<Expression> expression = f.rhs;
 
         if (!expression)
         {
-            std::cerr << "Error: " << symbol << " is missing definition.\n";
+            std::cerr << "Error: " << name << " is missing definition.\n";
             continue;
         }
 
-        str << "\n\ndouble " << symbol << "()\n"
+        str << "\n\ndouble " << name << "(";
+
+            system.bound_parameters.clear();
+            bool add_comma = false;
+            for (auto& p : f.symbol.parameters)
+            {
+                system.bound_parameters[p.symbol.value()] = true;
+                if (p.type != ParameterType::VARIABLE)
+                {
+                    std::cerr << "Error: Pattern matching for functions currently unsupported.\n";
+                    continue;
+                }
+                str << (add_comma ? ", " : "") << "double " << p.symbol.value();
+                add_comma = true;
+            }
+        
+            str << ")\n"
             << "{\n"
             << "    return " << expression->generate(system) << ";\n"
             << "}";
@@ -193,7 +235,7 @@ std::string generate_initial_state_setter(System &system)
     {
         if (initial_states[i].symbol.is_list())
         {
-            if (initial_states[i].symbol.indices[0].type == IndexType::EXPRESSION)
+            if (initial_states[i].symbol.parameters[0].type == ParameterType::EXPRESSION)
                 continue;
 
             str << generate_setter_list(system, initial_states[i]);
@@ -202,11 +244,11 @@ std::string generate_initial_state_setter(System &system)
         {
             if (!initial_states[i].rhs)
             {
-                std::cerr << "Error: Initial state of " << initial_states[i].symbol.symbol << " is missing definition.\n";
+                std::cerr << "Error: Initial state of " << initial_states[i].symbol.name << " is missing definition.\n";
                 continue;
             }
 
-            system.list_bindings.clear();
+            system.bound_parameters.clear();
             str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "] = " << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
@@ -214,11 +256,11 @@ std::string generate_initial_state_setter(System &system)
     // Second pass to define manual overrides to the list
     for (size_t i = 0; i < initial_states.size(); ++i)
     {
-        if (initial_states[i].symbol.is_list() && initial_states[i].symbol.indices[0].type == IndexType::EXPRESSION)
+        if (initial_states[i].symbol.is_list() && initial_states[i].symbol.parameters[0].type == ParameterType::EXPRESSION)
         {
-            system.list_bindings.clear();
+            system.bound_parameters.clear();
             str << "    values[INDEX_" << initial_states[i].symbol.to_string() << "_START + (size_t)"
-                << "(" << initial_states[i].symbol.indices[0].expression->generate(system) << " - 1)" << "] = "
+                << "(" << initial_states[i].symbol.parameters[0].expression->generate(system) << " - 1)" << "] = "
                 << initial_states[i].rhs->generate(system) << ";\n";
         }
     }
@@ -238,14 +280,14 @@ std::string generate_derivative_definitions(System &system)
     {
         if (deps[i].symbol.is_list())
         {
-            if (deps[i].symbol.indices[0].type == IndexType::EXPRESSION)
+            if (deps[i].symbol.parameters[0].type == ParameterType::EXPRESSION)
                 continue;
 
             str << generate_derivative_list(system, deps[i]);
         }
         else
         {
-            system.list_bindings.clear();
+            system.bound_parameters.clear();
             str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "] = " << deps[i].rhs->generate(system) << ";\n";
         }
     }
@@ -254,10 +296,10 @@ std::string generate_derivative_definitions(System &system)
     // Second pass to define manual overrides to the list
     for (size_t i = 0; i < deps.size(); ++i)
     {
-        if (deps[i].symbol.is_list() && deps[i].symbol.indices[0].type == IndexType::EXPRESSION)
+        if (deps[i].symbol.is_list() && deps[i].symbol.parameters[0].type == ParameterType::EXPRESSION)
         {
-            system.list_bindings.clear();
-            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_START + (size_t)(" << deps[i].symbol.indices[0].expression->generate(system)
+            system.bound_parameters.clear();
+            str << "    derivatives[INDEX_" << deps[i].symbol.to_string() << "_START + (size_t)(" << deps[i].symbol.parameters[0].expression->generate(system)
                 << " - 1)] = " << deps[i].rhs->generate(system) << ";\n";
         }
     }
@@ -321,6 +363,7 @@ int main(int argc, char **argv)
               << "#include <nvector/nvector_serial.h>\n\n"
               << generate_state_indices(system)
               << "#define NUM_DEPS " << system.max_index << "\n"
+              << generate_constant_definitions(system)
               << generate_expression_functions(system)
               << generate_initial_state_setter(system)
               << generate_state_csv_label_getter(system)

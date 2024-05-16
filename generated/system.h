@@ -7,11 +7,12 @@
 
 #define NUM_DEPS 11
 
-double T();
+double T = 1;
+double cm_to_m( double n);
 
-double T()
+double cm_to_m(double n)
 {
-    return 1;
+    return ((n) / (100));
 }
 
 void get_initial_state(N_Vector state) {
@@ -19,9 +20,9 @@ void get_initial_state(N_Vector state) {
 
     for (size_t n = 1; n <= 10; ++n)
     {
-        values[INDEX_C_START + (n - 1)] = ((T()) + (n));
+        values[INDEX_C_START + (n - 1)] = ((T) + (n));
     }
-    values[INDEX_G] = -(5);
+    values[INDEX_G] = -(cm_to_m((5)));
 }
 
 std::string get_state_csv_label() {
@@ -36,7 +37,7 @@ int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
     {
         derivatives[INDEX_C_START + (n - 1)] = ((-(values[INDEX_G])) + (n));
     }
-    derivatives[INDEX_G] = values[INDEX_C_START + (size_t)(1 - 1)];
+    derivatives[INDEX_G] = values[INDEX_C_START + (1) - 1];
 
     derivatives[INDEX_C_START + (size_t)(1 - 1)] = -(values[INDEX_G]);
     return 0;

@@ -8,13 +8,6 @@
 
 class System;
 
-enum class SymbolType 
-{
-    STATE,
-    COMPOUND,
-    LIST_INDEX
-};
-
 class Expression
 {
 public:

@@ -18,7 +18,7 @@ TEST(Tokenize, DerivativeTokens)
     EXPECT_EQ(tokens[1].type, TokenType::SYMBOL);
     EXPECT_TRUE(tokens[1].symbol.has_value());
     EXPECT_FALSE(tokens[1].value.has_value());
-    EXPECT_EQ(tokens[1].symbol.value().symbol, std::string("C"));
+    EXPECT_EQ(tokens[1].symbol.value().name, std::string("C"));
 }
 
 TEST(Tokenize, IndexedDerivativeTokens) 
@@ -37,10 +37,10 @@ TEST(Tokenize, IndexedDerivativeTokens)
     EXPECT_EQ(tokens[7].type, TokenType::SYMBOL);
     EXPECT_EQ(tokens[8].type, TokenType::RBRACKET);
 
-    EXPECT_EQ(tokens[1].symbol.value().symbol, "C");
-    EXPECT_EQ(tokens[3].symbol.value().symbol, "n");
-    EXPECT_EQ(tokens[5].symbol.value().symbol, "x");
-    EXPECT_EQ(tokens[7].symbol.value().symbol, "z");
+    EXPECT_EQ(tokens[1].symbol.value().name, "C");
+    EXPECT_EQ(tokens[3].symbol.value().name, "n");
+    EXPECT_EQ(tokens[5].symbol.value().name, "x");
+    EXPECT_EQ(tokens[7].symbol.value().name, "z");
 }
 
 TEST(Tokenize, ListToken) 
@@ -73,7 +73,7 @@ TEST(Parse, parse_state_definition)
 
     auto& var = system.state_variables[0];
 
-    EXPECT_EQ(system.state_variables[0].symbol.symbol, std::string("C"));
+    EXPECT_EQ(system.state_variables[0].symbol.name, std::string("C"));
     EXPECT_EQ(typeid(*var.rhs.get()), typeid(SymbolExpression));
 }
 
@@ -91,8 +91,8 @@ TEST(Parse, AddExpression)
 
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.lhs.get());
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
-    EXPECT_EQ(lhsExpr.symbol.symbol, std::string("A"));
-    EXPECT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+    EXPECT_EQ(lhsExpr.symbol.name, std::string("A"));
+    EXPECT_EQ(rhsExpr.symbol.name, std::string("B"));
 }
 
 TEST(Parse, SubtractExpression)
@@ -109,8 +109,8 @@ TEST(Parse, SubtractExpression)
 
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.lhs.get());
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(subexpr.rhs.get());
-    EXPECT_EQ(lhsExpr.symbol.symbol, std::string("A"));
-    EXPECT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+    EXPECT_EQ(lhsExpr.symbol.name, std::string("A"));
+    EXPECT_EQ(rhsExpr.symbol.name, std::string("B"));
 }
 
 TEST(Parse, NegateParentheses)
@@ -124,7 +124,7 @@ TEST(Parse, NegateParentheses)
     NegateExpression& negate_expr = *dynamic_cast<NegateExpression*>(expr.get());
     EXPECT_EQ(typeid(*negate_expr.negated_expression.get()), typeid(SymbolExpression));
     SymbolExpression& negatedExpression = *dynamic_cast<SymbolExpression*>(negate_expr.negated_expression.get());
-    EXPECT_EQ(negatedExpression.symbol.symbol, std::string("A"));
+    EXPECT_EQ(negatedExpression.symbol.name, std::string("A"));
 }
 
 TEST(Parse, TrickyNegate)
@@ -141,10 +141,10 @@ TEST(Parse, TrickyNegate)
     NegateExpression& lhsExpr = *dynamic_cast<NegateExpression*>(addexpr.lhs.get());
     EXPECT_EQ(typeid(*lhsExpr.negated_expression.get()), typeid(SymbolExpression));
     SymbolExpression& negatedExpression = *dynamic_cast<SymbolExpression*>(lhsExpr.negated_expression.get());
-    EXPECT_EQ(negatedExpression.symbol.symbol, std::string("A"));
+    EXPECT_EQ(negatedExpression.symbol.name, std::string("A"));
 
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
-    EXPECT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+    EXPECT_EQ(rhsExpr.symbol.name, std::string("B"));
 }
 
 TEST(Parse, TrickyExponent)
@@ -165,10 +165,10 @@ TEST(Parse, TrickyExponent)
     EXPECT_EQ(typeid(*exponent_expression.exp.get()), typeid(SymbolExpression));
 
     SymbolExpression& exp = *dynamic_cast<SymbolExpression*>(exponent_expression.exp.get());
-    EXPECT_EQ(exp.symbol.indices.size(), 1);
+    EXPECT_EQ(exp.symbol.parameters.size(), 1);
 
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(addexpr.rhs.get());
-    EXPECT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+    EXPECT_EQ(rhsExpr.symbol.name, std::string("B"));
 }
 
 TEST(Parse, OrderOfOperations)
@@ -240,10 +240,10 @@ TEST(Parse, NegateAndDivide)
     EXPECT_EQ(typeid(*divexpr.rhs.get()), typeid(SymbolExpression));
 
     SymbolExpression& lhsExpr = *dynamic_cast<SymbolExpression*>(divexpr.lhs.get());
-    EXPECT_EQ(lhsExpr.symbol.symbol, std::string("A"));
+    EXPECT_EQ(lhsExpr.symbol.name, std::string("A"));
 
     SymbolExpression& rhsExpr = *dynamic_cast<SymbolExpression*>(divexpr.rhs.get());
-    EXPECT_EQ(rhsExpr.symbol.symbol, std::string("B"));
+    EXPECT_EQ(rhsExpr.symbol.name, std::string("B"));
 }
 
 TEST(Parse, IndexedSymbol)
@@ -254,12 +254,12 @@ TEST(Parse, IndexedSymbol)
     parse_initial_value(system, tokens);
 
     EXPECT_EQ(system.initial_states.size(), 1);
-    EXPECT_EQ(system.initial_states[0].symbol.indices.size(), 3);
+    EXPECT_EQ(system.initial_states[0].symbol.parameters.size(), 3);
 
-    auto& indices = system.initial_states[0].symbol.indices;
-    EXPECT_EQ(indices[0].type, IndexType::EXPRESSION);
-    EXPECT_EQ(indices[1].type, IndexType::VARIABLE);
-    EXPECT_EQ(indices[2].type, IndexType::EXPRESSION);
+    auto& indices = system.initial_states[0].symbol.parameters;
+    EXPECT_EQ(indices[0].type, ParameterType::EXPRESSION);
+    EXPECT_EQ(indices[1].type, ParameterType::VARIABLE);
+    EXPECT_EQ(indices[2].type, ParameterType::EXPRESSION);
     EXPECT_TRUE(dynamic_cast<AddExpression*>(indices[2].expression.get()));
 }
 
@@ -276,12 +276,12 @@ TEST(Parse, IndexedExpression)
     EXPECT_TRUE(negated_expr);
     SymbolExpression* sym_expr = dynamic_cast<SymbolExpression*>(negated_expr->negated_expression.get());
     EXPECT_TRUE(sym_expr);
-    EXPECT_EQ(sym_expr->symbol.indices.size(), 3);
+    EXPECT_EQ(sym_expr->symbol.parameters.size(), 3);
 
-    auto& indices = sym_expr->symbol.indices;
-    EXPECT_EQ(indices[0].type, IndexType::EXPRESSION);
-    EXPECT_EQ(indices[1].type, IndexType::VARIABLE);
-    EXPECT_EQ(indices[2].type, IndexType::EXPRESSION);
+    auto& indices = sym_expr->symbol.parameters;
+    EXPECT_EQ(indices[0].type, ParameterType::EXPRESSION);
+    EXPECT_EQ(indices[1].type, ParameterType::VARIABLE);
+    EXPECT_EQ(indices[2].type, ParameterType::EXPRESSION);
     EXPECT_TRUE(dynamic_cast<SubtractExpression*>(indices[2].expression.get()));
 }
 
@@ -301,10 +301,10 @@ TEST(Parse, IndexedExpression2)
     EXPECT_TRUE(sym_expr);
     
     SymbolExpression* sym2_expr = dynamic_cast<SymbolExpression*>(sub_expr->rhs.get());
-    auto& indices = sym2_expr->symbol.indices;
+    auto& indices = sym2_expr->symbol.parameters;
     EXPECT_EQ(indices.size(), 1);
-    EXPECT_EQ(indices[0].type, IndexType::VARIABLE);
-    EXPECT_TRUE(indices[0].list_symbol.has_value());
+    EXPECT_EQ(indices[0].type, ParameterType::VARIABLE);
+    EXPECT_TRUE(indices[0].symbol.has_value());
 }
 
 TEST(Generate, StateDefinition)
@@ -314,8 +314,8 @@ TEST(Generate, StateDefinition)
     System system;
     system.state_lists["n"] = 5;
     parse_state_definition(system, tokens);
-    system.list_bindings["n"] = 5;
+    system.bound_parameters["n"] = 5;
     
     EXPECT_TRUE(system.state_variables.size() == 1);
-    ASSERT_EQ(system.state_variables[0].rhs->generate(system), "((1) - (values[INDEX_C_START + n]))");
+    ASSERT_EQ(system.state_variables[0].rhs->generate(system), "((1) - (values[INDEX_C_START + (n) - 1]))");
 }

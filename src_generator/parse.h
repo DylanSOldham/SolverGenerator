@@ -25,23 +25,36 @@ struct InitialState
     std::shared_ptr<Expression> rhs;
 };
 
+struct Function
+{
+    Symbol symbol;
+    std::shared_ptr<Expression> rhs;
+};
+
 struct System
 {
     std::vector<StateVariable> state_variables; // Represents the state, which may or may not include lists
     std::vector<InitialState> initial_states;
+    std::vector<Function> function_definitions;
 
     std::map<std::string, size_t> state_lists; // The lists that have been defined
-    std::map<std::string, size_t> list_bindings;
-    std::map<std::string, std::shared_ptr<Expression>> expression_definitions;
+    std::map<std::string, bool> bound_parameters;
+    std::map<std::string, std::shared_ptr<Expression>> constant_definitions;
 
     size_t max_index = 0;
 
     SymbolType resolve_symbol_type(Symbol symbol) {
-        if (list_bindings.count(symbol.symbol))
+        if (constant_definitions.count(symbol.name)) return SymbolType::CONSTANT;
+        if (bound_parameters.count(symbol.name)) return SymbolType::PARAMETER;
+
+        for (auto& f : function_definitions)
         {
-            return SymbolType::LIST_INDEX;
+            if (f.symbol == symbol) {
+                return SymbolType::FUNCTION;
+            }
         }
 
+        // Map would probably be better
         for (size_t i = 0; i < state_variables.size(); ++i)
         {
             if (state_variables[i].symbol == symbol) {
@@ -49,7 +62,8 @@ struct System
             }
         }
 
-        return SymbolType::COMPOUND;
+        std::cerr << "Error: Undefined symbol " << symbol.name << std::endl;
+        return SymbolType::UNRESOLVED;
     }
 };
 

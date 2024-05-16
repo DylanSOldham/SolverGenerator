@@ -1,30 +1,52 @@
 #include "parse.h"
 
-std::vector<ListIndex> parse_indices(std::vector<Token> tokens);
+std::vector<Parameter> parse_parameters(std::vector<Token> tokens);
 
 Symbol parse_symbol(std::vector<Token>& tokens)
 {   
     Symbol symbol = tokens[0].symbol.value();
-    std::vector<ListIndex> indices;
-    
-    if (tokens[1].type == TokenType::LBRACKET)
+
+    if (tokens.size() == 1)
     {
-        auto end_it = std::find_if(tokens.begin() + 1, tokens.end(), [](Token token){ return token.type == TokenType::RBRACKET; });
-        if (end_it == tokens.end()) {
-            tokens.clear();
-            return symbol;
-        }
-
-        std::vector<Token> indices_tokens = std::vector<Token>(tokens.begin() + 2, end_it);
-
-        std::vector<ListIndex> indices = parse_indices(indices_tokens);
-        symbol.indices = indices;
-
-        tokens.erase(tokens.begin(), end_it + 1);
+        tokens.erase(tokens.begin());
+        symbol.type = SymbolType::CONSTANT;
         return symbol;
     }
 
-    tokens.erase(tokens.begin());
+    TokenType end_token;
+    switch (tokens[1].type)
+    {
+        case TokenType::LBRACKET:
+            end_token = TokenType::RBRACKET;
+            symbol.type = SymbolType::STATE;
+        break;
+        case TokenType::LPAREN:
+            end_token = TokenType::RPAREN;
+            symbol.type = SymbolType::FUNCTION;
+        break;
+        default:
+            tokens.erase(tokens.begin());
+            symbol.type = SymbolType::CONSTANT;
+            return symbol;
+    }
+
+    auto end_it = std::find_if(tokens.begin() + 1, tokens.end(), [&](Token token){ return token.type == end_token; });
+    if (end_it == tokens.end()) {
+        tokens.clear();
+        symbol.type = SymbolType::UNRESOLVED;
+        return symbol;
+    }
+
+    std::vector<Token> parameters_tokens = std::vector<Token>(tokens.begin() + 2, end_it);
+    std::vector<Parameter> parameters = parse_parameters(parameters_tokens);
+
+    if (parameters.size() == 0)
+    {
+        symbol.type = SymbolType::CONSTANT;
+    }
+
+    symbol.parameters = parameters;
+    tokens.erase(tokens.begin(), end_it + 1);
     return symbol;
 }
 
@@ -171,28 +193,28 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
     return expression;
 }
 
-std::vector<ListIndex> parse_indices(std::vector<Token> tokens)
+std::vector<Parameter> parse_parameters(std::vector<Token> tokens)
 {
-    std::vector<ListIndex> indices;
+    std::vector<Parameter> parameters;
 
     while (1)
     {
         auto it = std::find_if(tokens.begin(), tokens.end(), [](Token token){ return token.type == TokenType::COMMA; });
 
-        std::vector<Token> index_tokens = std::vector<Token>(tokens.begin(), it);
+        std::vector<Token> parameter_tokens = std::vector<Token>(tokens.begin(), it);
 
-        ListIndex index;
-        if (index_tokens.size() == 1 && index_tokens[0].type == TokenType::SYMBOL)
+        Parameter parameter;
+        if (parameter_tokens.size() == 1 && parameter_tokens[0].type == TokenType::SYMBOL)
         {
-            index.type = IndexType::VARIABLE;
-            index.list_symbol = index_tokens[0].symbol.value().symbol;
-            indices.push_back(index);
+            parameter.type = ParameterType::VARIABLE;
+            parameter.symbol = parameter_tokens[0].symbol.value().name;
+            parameters.push_back(parameter);
         }
         else
         {
-            index.type = IndexType::EXPRESSION;
-            index.expression = parse_expression(index_tokens);
-            indices.push_back(index);
+            parameter.type = ParameterType::EXPRESSION;
+            parameter.expression = parse_expression(parameter_tokens);
+            parameters.push_back(parameter);
         }
 
         if (it == tokens.end()) break;
@@ -200,7 +222,7 @@ std::vector<ListIndex> parse_indices(std::vector<Token> tokens)
         tokens.erase(tokens.begin(), it + 1);
     }
 
-    return indices;
+    return parameters;
 }
 
 void parse_state_definition(System& system, std::vector<Token> tokens)
@@ -218,7 +240,7 @@ void parse_state_definition(System& system, std::vector<Token> tokens)
     std::shared_ptr<Expression> rhs = parse_expression(tokens);
     if (!rhs)
     {
-        std::cerr << "Error: Malformed rhs expression for derivative of " << symbol.symbol << "\n";
+        std::cerr << "Error: Malformed rhs expression for derivative of " << symbol.name << "\n";
         return;
     }
 
@@ -234,7 +256,7 @@ void parse_initial_value(System& system, std::vector<Token> tokens)
     std::shared_ptr<Expression> expression = parse_expression(tokens);
     if (!expression)
     {
-        std::cerr << "Error: Malformed expression for initial value of " << symbol.symbol << "\n";
+        std::cerr << "Error: Malformed expression for initial value of " << symbol.name << "\n";
         return;
     }
     system.initial_states.push_back(InitialState { symbol, expression });
@@ -247,10 +269,21 @@ void parse_expression_declaration(System& system, std::vector<Token> tokens)
     std::shared_ptr<Expression> expression = parse_expression(tokens);
     if (!expression)
     {
-        std::cerr << "Malformed expression: " << symbol.symbol << "\n";
+        std::cerr << "Malformed expression: " << symbol.name << "\n";
         return;
     }
-    system.expression_definitions[symbol.symbol] = expression;
+
+    if (symbol.type == SymbolType::FUNCTION)
+    {
+        system.function_definitions.push_back( Function { symbol, expression });
+        return;
+    }
+
+    if (symbol.type == SymbolType::CONSTANT)
+    {
+        system.constant_definitions[symbol.name] = expression;
+        return;
+    }
 }
 
 void parse_symbol_declaration(System& system, std::vector<Token> tokens) 
@@ -259,7 +292,7 @@ void parse_symbol_declaration(System& system, std::vector<Token> tokens)
 
     if (tokens[2].type == TokenType::LIST)
     {
-       system.state_lists.emplace(symbol.symbol, tokens[2].list_size);
+       system.state_lists.emplace(symbol.name, tokens[2].list_size);
        return;
     }
 
