@@ -29,6 +29,16 @@ struct Function
 {
     Symbol symbol;
     std::shared_ptr<Expression> rhs;
+
+    bool is_constant(SystemDeclarations& system)
+    {
+        return symbol.parameters.size() == 0 && !is_state_dependent(system);
+    }
+
+    bool is_state_dependent(SystemDeclarations& system)
+    {
+        return rhs->has_state_dependencies(system);
+    }
 };
 
 struct SystemDeclarations
@@ -39,12 +49,10 @@ struct SystemDeclarations
 
     std::map<std::string, size_t> state_lists; // The lists that have been defined
     std::map<std::string, bool> bound_parameters;
-    std::map<std::string, std::shared_ptr<Expression>> constant_definitions;
 
     size_t max_index = 0;
 
     SymbolType resolve_symbol_type(Symbol symbol) {
-        if (constant_definitions.count(symbol.name)) return SymbolType::CONSTANT;
         if (bound_parameters.count(symbol.name)) return SymbolType::PARAMETER;
 
         for (auto& f : function_definitions)

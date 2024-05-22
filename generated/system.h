@@ -8,12 +8,17 @@
 
 #define NUM_DEPS 11
 
-double T = 1;
-double cm_to_m( double n,  double x);
+double T(double* values);
+double cm_to_m(double x, double n);
 
-double cm_to_m(double n, double x)
+double T(double* values)
 {
-    return ((((n) + (x))) / (100));
+    return ((1) - (values[INDEX_C_START + (1) - 1]));
+}
+
+double cm_to_m(double x, double n)
+{
+    return ((((n) - (x))) / (100));
 }
 
 void get_initial_state(N_Vector state) {
@@ -21,7 +26,7 @@ void get_initial_state(N_Vector state) {
 
     for (size_t n = 1; n <= 10; ++n)
     {
-        values[INDEX_C_START + (n - 1)] = ((T) + (n));
+        values[INDEX_C_START + (n - 1)] = ((T(values)) + (n));
     }
     values[INDEX_G] = -(cm_to_m((5), (1.9)));
 }

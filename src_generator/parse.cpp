@@ -7,13 +7,6 @@ Symbol parse_symbol(std::vector<Token>& tokens)
 {   
     Symbol symbol = tokens[0].symbol.value();
 
-    if (tokens.size() == 1)
-    {
-        tokens.erase(tokens.begin());
-        symbol.type = SymbolType::CONSTANT;
-        return symbol;
-    }
-
     TokenType end_token;
     switch (tokens[1].type)
     {
@@ -27,7 +20,7 @@ Symbol parse_symbol(std::vector<Token>& tokens)
         break;
         default:
             tokens.erase(tokens.begin());
-            symbol.type = SymbolType::CONSTANT;
+            symbol.type = SymbolType::FUNCTION;
             return symbol;
     }
 
@@ -40,11 +33,6 @@ Symbol parse_symbol(std::vector<Token>& tokens)
 
     std::vector<Token> parameters_tokens = std::vector<Token>(tokens.begin() + 2, end_it);
     std::vector<Parameter> parameters = parse_parameters(parameters_tokens);
-
-    if (parameters.size() == 0)
-    {
-        symbol.type = SymbolType::CONSTANT;
-    }
 
     symbol.parameters = parameters;
     tokens.erase(tokens.begin(), end_it + 1);
@@ -273,12 +261,6 @@ void parse_expression_declaration(SystemDeclarations& system, std::vector<Token>
     if (symbol.type == SymbolType::FUNCTION)
     {
         system.function_definitions.push_back( Function { symbol, expression });
-        return;
-    }
-
-    if (symbol.type == SymbolType::CONSTANT)
-    {
-        system.constant_definitions[symbol.name] = expression;
         return;
     }
 }

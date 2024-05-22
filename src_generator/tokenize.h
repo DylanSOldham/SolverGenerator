@@ -31,7 +31,6 @@ enum class SymbolType
 {
     UNRESOLVED,
     STATE,
-    CONSTANT,
     FUNCTION,
     PARAMETER
 };
@@ -60,6 +59,11 @@ struct Symbol
     bool operator==(const Symbol& op)
     {
         return op.name == name;
+    }
+
+    bool operator !=(const Symbol& op)
+    {
+        return op.name != name;
     }
 
     bool is_list()

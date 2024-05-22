@@ -1,4 +1,4 @@
-T = 1.0
+T = 1.0 - C[1]
 
 n = 1 .. 10
 d/dt C[n] = -G + n
@@ -8,4 +8,4 @@ INITIAL C[n] = T + n
 d/dt G = C[1]
 INITIAL G = -cm_to_m(5.0, 1.90)
 
-cm_to_m(n, x) = (n + x) / 100
+cm_to_m(x, n) = (n - x) / 100

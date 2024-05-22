@@ -133,9 +133,10 @@ std::string generate_constant_definitions(SystemDeclarations &system)
 {
     std::stringstream str;
 
-    for (auto& expr : system.constant_definitions)
+    for (auto& function : system.function_definitions)
     {
-        str << "\ndouble " << expr.first << " = " << expr.second->generate(system) << ";";
+        if (!function.is_constant(system)) continue;
+        str << "\ndouble " << function.symbol.to_string() << " = " << function.rhs->generate(system) << ";";
     }
 
     return str.str();
@@ -149,18 +150,24 @@ std::string generate_expression_functions(SystemDeclarations &system)
 
     for (auto &f : functions)
     {
+        if (f.is_constant(system)) continue;
+
         str << "\ndouble " << f.symbol.to_string() << "(";
 
-        bool add_comma = false;
-        for (auto& p : f.symbol.parameters)
+        for (auto i = 0; i < f.symbol.parameters.size(); ++i)
         {
+            auto& p = f.symbol.parameters[i];
             if (p.type != ParameterType::VARIABLE)
             {
                 std::cerr << "Error: Pattern matching for functions currently unsupported.\n";
                 continue;
             }
-            str << (add_comma ? ", " : "") << " double " << p.symbol.value();
-            add_comma = true;
+            str << (i != 0 ? ", " : "") << "double " << p.symbol.value();
+        }
+        
+        if (f.is_state_dependent(system))
+        {
+            str << (f.symbol.parameters.size() > 0 ? ", " : "") << "double* values";
         }
 
         str << ");";
@@ -168,6 +175,8 @@ std::string generate_expression_functions(SystemDeclarations &system)
 
     for (auto &f : functions)
     {
+        if (f.is_constant(system)) continue;
+
         auto name = f.symbol.to_string();
         std::shared_ptr<Expression> expression = f.rhs;
 
@@ -180,19 +189,23 @@ std::string generate_expression_functions(SystemDeclarations &system)
         str << "\n\ndouble " << name << "(";
 
             system.bound_parameters.clear();
-            bool add_comma = false;
-            for (auto& p : f.symbol.parameters)
+            for (auto i = 0; i < f.symbol.parameters.size(); ++i)
             {
+                auto p = f.symbol.parameters[i];
                 system.bound_parameters[p.symbol.value()] = true;
                 if (p.type != ParameterType::VARIABLE)
                 {
                     std::cerr << "Error: Pattern matching for functions currently unsupported.\n";
                     continue;
                 }
-                str << (add_comma ? ", " : "") << "double " << p.symbol.value();
-                add_comma = true;
+                str << (i != 0 ? ", " : "") << "double " << p.symbol.value();
             }
         
+            if (f.is_state_dependent(system))
+            {
+                str << (f.symbol.parameters.size() > 0 ? ", " : "") << "double* values";
+            }
+
             str << ")\n"
             << "{\n"
             << "    return " << expression->generate(system) << ";\n"

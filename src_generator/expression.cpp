@@ -54,30 +54,29 @@ std::string SymbolExpression::generate(SystemDeclarations& system)
                 return "0";
             }
             return symbol.to_string();
-        case SymbolType::CONSTANT:
-            if (!system.constant_definitions.count(symbol.name))
-            {
-                std::cerr << "Error: Constant " << symbol.name << " is undefined.\n";
-            }
-            return symbol.to_string();
         case SymbolType::FUNCTION:
-            if (symbol.parameters.size() < 1)
-            {
-                std::cerr << "Error: Function " << symbol.name << " with no parameters is not allowed.\n";
-                return "0";
-            }
             for (auto& f : system.function_definitions)
             {
-                if (f.symbol == symbol)
+                if (f.symbol != symbol) continue;
+                
+                if (f.is_constant(system))
                 {
-                    str << symbol.to_string() << "(";
-                    for (auto i = 0; i < symbol.parameters.size(); ++i)
-                    {
-                        str << (i != 0 ? ", " : "") << generate_parameter_value(system, symbol.parameters[i]);
-                    }
-                    str << ")";
-                    return str.str();
+                    return symbol.to_string();
                 }
+
+                str << symbol.to_string() << "(";
+                for (auto i = 0; i < symbol.parameters.size(); ++i)
+                {
+                    str << (i != 0 ? ", " : "") << generate_parameter_value(system, symbol.parameters[i]);
+                }
+
+                if (f.is_state_dependent(system))
+                {
+                    str << (symbol.parameters.size() == 0 ? "" : ", ") << "values";
+                }
+
+                str << ")";
+                return str.str();
             }
             std::cerr << "Error: Function " << symbol.name << " is undefined.\n";
             return "0";
