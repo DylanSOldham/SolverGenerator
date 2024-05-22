@@ -48,10 +48,21 @@ dislocation_density_evolution = 300.
 
 n = 1 .. 50
 d/dt Ci[n] = i_gain(n)
-d/dt Ci[1] = i_gain(1) 
+d/dt Cv[n] = v_gain(n)
 
+d/dt Ci[1] = i_gain(1) 
+d/dt Cv[1] = v_gain(1)
 
 d/dt Rho = dislocation_gain - dislocation_density_evolution * burgers_vector^2 * Rho^(3/2)
+
+
+
+#--------------------------------------------------------------------------------------------------
+# INITIAL STATES
+#--------------------------------------------------------------------------------------------------
+
+INITIAL Ci[n] = 1 * 10^-6
+INITIAL Cv[n] = 1 * 10^-6
 INITIAL Rho = dislocation_density_0
 
 
@@ -67,3 +78,9 @@ i_gain(2) = flux * recombination * i_bi
 i_gain(3) = flux * recombination * i_tri
 i_gain(4) = flux * recombination * i_quad
 i_gain(n) = 0
+
+v_gain(1) = flux * recombination * (1.0 - v_bi - v_tri - v_quad)
+v_gain(2) = flux * recombination * v_bi
+v_gain(3) = flux * recombination * v_tri
+v_gain(4) = flux * recombination * v_quad
+v_gain(n) = 0

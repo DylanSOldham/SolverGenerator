@@ -13,7 +13,7 @@ std::string generate_index_list(SystemDeclarations &system, Symbol state_symbol)
 {
     if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
     {
-        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl;
+        std::cerr << "Warning: Skipping index generation for a non variable list parameter." << std::endl;
         return "";
     }
 
@@ -39,7 +39,7 @@ std::string generate_setter_list(SystemDeclarations &system, InitialState &initi
 {
     if (initial_state.symbol.parameters[0].type != ParameterType::VARIABLE)
     {
-        std::cerr << "Error: Trying to generate indices for a non variable list index." << std::endl;
+        std::cerr << "Error: Trying to generate indices for a non variable list parameter." << std::endl;
         return "";
     }
 
@@ -73,7 +73,7 @@ std::string generate_derivative_list(SystemDeclarations &system, StateVariable &
 {
     if (state_variable.symbol.parameters[0].type != ParameterType::VARIABLE)
     {
-        std::cerr << "Warning: Trying to generate indices for a non variable list index." << std::endl;
+        std::cerr << "Warning: Trying to generate indices for a non variable list parameter." << std::endl;
         return "";
     }
 
@@ -107,7 +107,7 @@ std::string generate_csv_list(SystemDeclarations &system, Symbol state_symbol)
 {
     if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
     {
-        std::cerr << "Warning: Skipping index generation for a non variable list index." << std::endl;
+        std::cerr << "Warning: Skipping csv label generation for a non variable list parameter." << std::endl;
         return "";
     }
 
