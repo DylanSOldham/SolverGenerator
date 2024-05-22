@@ -6,6 +6,6 @@ d/dt C[1] = -(G)
 INITIAL C[n] = T + n
 
 d/dt G = C[1]
-INITIAL G = -cm_to_m(5.0)
+INITIAL G = -cm_to_m(5.0, 1.90)
 
-cm_to_m(n) = n / 100
+cm_to_m(n, x) = (n + x) / 100

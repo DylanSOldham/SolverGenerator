@@ -70,7 +70,12 @@ std::string SymbolExpression::generate(SystemDeclarations& system)
             {
                 if (f.symbol == symbol)
                 {
-                    str << symbol.to_string() << "(" << generate_parameter_value(system, symbol.parameters[0]) << ")";
+                    str << symbol.to_string() << "(";
+                    for (auto i = 0; i < symbol.parameters.size(); ++i)
+                    {
+                        str << (i != 0 ? ", " : "") << generate_parameter_value(system, symbol.parameters[i]);
+                    }
+                    str << ")";
                     return str.str();
                 }
             }

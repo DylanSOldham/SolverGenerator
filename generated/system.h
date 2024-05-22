@@ -9,11 +9,11 @@
 #define NUM_DEPS 11
 
 double T = 1;
-double cm_to_m( double n);
+double cm_to_m( double n,  double x);
 
-double cm_to_m(double n)
+double cm_to_m(double n, double x)
 {
-    return ((n) / (100));
+    return ((((n) + (x))) / (100));
 }
 
 void get_initial_state(N_Vector state) {
@@ -23,7 +23,7 @@ void get_initial_state(N_Vector state) {
     {
         values[INDEX_C_START + (n - 1)] = ((T) + (n));
     }
-    values[INDEX_G] = -(cm_to_m((5)));
+    values[INDEX_G] = -(cm_to_m((5), (1.9)));
 }
 
 std::string get_state_csv_label() {
