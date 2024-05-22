@@ -16,7 +16,7 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(generator ./src_generator/generator.cpp ./src_generator/expression.cpp ./src_generator/parse.cpp ./src_generator/tokenize.cpp)
+add_executable(generator ./src_generator/main.cpp ./src_generator/generator.cpp ./src_generator/expression.cpp ./src_generator/parse.cpp ./src_generator/tokenize.cpp)
 
 add_executable(solver ./src_solver/main.cpp)
 target_link_libraries(solver SUNDIALS::cvode SUNDIALS::nvecserial)

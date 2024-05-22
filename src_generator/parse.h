@@ -31,7 +31,7 @@ struct Function
     std::shared_ptr<Expression> rhs;
 };
 
-struct System
+struct SystemDeclarations
 {
     std::vector<StateVariable> state_variables; // Represents the state, which may or may not include lists
     std::vector<InitialState> initial_states;
@@ -68,11 +68,7 @@ struct System
 };
 
 std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens);
-
-void parse_state_definition(System& system, std::vector<Token> tokens);
-
-void parse_initial_value(System& system, std::vector<Token> tokens);
-
-void parse_declaration(System& system, std::string line);
-
-void read_system(System& system, std::ifstream& stream);
+void parse_state_definition(SystemDeclarations& system, std::vector<Token> tokens);
+void parse_initial_value(SystemDeclarations& system, std::vector<Token> tokens);
+void parse_declaration(SystemDeclarations& system, std::string line);
+void read_system(SystemDeclarations& system, std::ifstream& stream);

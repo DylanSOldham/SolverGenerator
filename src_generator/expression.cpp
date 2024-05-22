@@ -1,7 +1,7 @@
 #include "expression.h"
 #include "parse.h"
 
-std::string generate_parameter_value(System& system, Parameter& parameter)
+std::string generate_parameter_value(SystemDeclarations& system, Parameter& parameter)
 {
     std::stringstream str;
     switch(parameter.type)
@@ -31,7 +31,7 @@ std::string generate_parameter_value(System& system, Parameter& parameter)
     return str.str();
 }
 
-std::string SymbolExpression::generate(System& system)
+std::string SymbolExpression::generate(SystemDeclarations& system)
 {
     std::stringstream str;
 
@@ -82,7 +82,7 @@ std::string SymbolExpression::generate(System& system)
     return symbol.to_string();
 }
 
-bool SymbolExpression::has_state_dependencies(System& system)
+bool SymbolExpression::has_state_dependencies(SystemDeclarations& system)
 {
     // Probably better as a map, having this ordered is nice for generation though
     for (StateVariable& dep : system.state_variables)
@@ -93,35 +93,35 @@ bool SymbolExpression::has_state_dependencies(System& system)
     return false;
 }
 
-std::string AddExpression::generate(System& system)
+std::string AddExpression::generate(SystemDeclarations& system)
 {
     std::stringstream code;
     code << "((" << lhs->generate(system) << ") + (" << rhs->generate(system) << "))";
     return code.str();
 }
 
-std::string SubtractExpression::generate(System& system)
+std::string SubtractExpression::generate(SystemDeclarations& system)
 {
     std::stringstream code;
     code << "((" << lhs->generate(system) << ") - (" << rhs->generate(system) << "))";
     return code.str();
 }
 
-std::string MultiplyExpression::generate(System& system)
+std::string MultiplyExpression::generate(SystemDeclarations& system)
 {
     std::stringstream code;
     code << "((" << lhs->generate(system) << ") * (" << rhs->generate(system) << "))";
     return code.str();
 }
 
-std::string DivideExpression::generate(System& system)
+std::string DivideExpression::generate(SystemDeclarations& system)
 {
     std::stringstream code;
     code << "((" << lhs->generate(system) << ") / (" << rhs->generate(system) << "))";
     return code.str();
 }
 
-std::string ExponentExpression::generate(System& system)
+std::string ExponentExpression::generate(SystemDeclarations& system)
 {
     if (!base) {
         std::cerr << "Error: Exponent expression is missing base." << std::endl;
@@ -138,7 +138,7 @@ std::string ExponentExpression::generate(System& system)
     return code.str();
 }
 
-std::string SqrtExpression::generate(System& system)
+std::string SqrtExpression::generate(SystemDeclarations& system)
 {
     std::stringstream code;
     code << "std::sqrt(" << base->generate(system) << ")";

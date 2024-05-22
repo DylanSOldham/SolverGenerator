@@ -9,7 +9,7 @@
 #include "expression.h"
 #include "parse.h"
 
-std::string generate_index_list(System &system, Symbol state_symbol)
+std::string generate_index_list(SystemDeclarations &system, Symbol state_symbol)
 {
     if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
     {
@@ -35,7 +35,7 @@ std::string generate_index_list(System &system, Symbol state_symbol)
     return str.str();
 }
 
-std::string generate_setter_list(System &system, InitialState &initial_state)
+std::string generate_setter_list(SystemDeclarations &system, InitialState &initial_state)
 {
     if (initial_state.symbol.parameters[0].type != ParameterType::VARIABLE)
     {
@@ -69,7 +69,7 @@ std::string generate_setter_list(System &system, InitialState &initial_state)
     return str.str();
 }
 
-std::string generate_derivative_list(System &system, StateVariable &state_variable)
+std::string generate_derivative_list(SystemDeclarations &system, StateVariable &state_variable)
 {
     if (state_variable.symbol.parameters[0].type != ParameterType::VARIABLE)
     {
@@ -103,7 +103,7 @@ std::string generate_derivative_list(System &system, StateVariable &state_variab
     return str.str();
 }
 
-std::string generate_csv_list(System &system, Symbol state_symbol)
+std::string generate_csv_list(SystemDeclarations &system, Symbol state_symbol)
 {
     if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
     {
@@ -129,7 +129,7 @@ std::string generate_csv_list(System &system, Symbol state_symbol)
     return str.str();
 }
 
-std::string generate_constant_definitions(System &system)
+std::string generate_constant_definitions(SystemDeclarations &system)
 {
     std::stringstream str;
 
@@ -141,7 +141,7 @@ std::string generate_constant_definitions(System &system)
     return str.str();
 }
 
-std::string generate_expression_functions(System &system)
+std::string generate_expression_functions(SystemDeclarations &system)
 {
     std::stringstream str;
 
@@ -202,7 +202,7 @@ std::string generate_expression_functions(System &system)
     return str.str();
 }
 
-std::string generate_state_indices(System &system)
+std::string generate_state_indices(SystemDeclarations &system)
 {
     std::stringstream str;
     auto &state_variables = system.state_variables;
@@ -223,7 +223,7 @@ std::string generate_state_indices(System &system)
     return str.str();
 }
 
-std::string generate_initial_state_setter(System &system)
+std::string generate_initial_state_setter(SystemDeclarations &system)
 {
     auto &initial_states = system.initial_states;
 
@@ -270,7 +270,7 @@ std::string generate_initial_state_setter(System &system)
     return str.str();
 }
 
-std::string generate_derivative_definitions(System &system)
+std::string generate_derivative_definitions(SystemDeclarations &system)
 {
     auto &deps = system.state_variables;
 
@@ -307,7 +307,7 @@ std::string generate_derivative_definitions(System &system)
     return str.str();
 }
 
-std::string generate_state_csv_label_getter(System &system)
+std::string generate_state_csv_label_getter(SystemDeclarations &system)
 {
     std::stringstream str;
 
@@ -335,7 +335,7 @@ std::string generate_state_csv_label_getter(System &system)
     return str.str();
 }
 
-std::string generate_system(System &system)
+std::string generate_system(SystemDeclarations &system)
 {
     std::stringstream str;
 
@@ -349,27 +349,4 @@ std::string generate_system(System &system)
         << "}";
 
     return str.str();
-}
-
-int main(int argc, char **argv)
-{
-    std::string filename = (argc < 2) ? "system.txt" : argv[1];
-    std::ifstream system_src_file(filename, std::ios::in);
-    System system;
-    read_system(system, system_src_file);
-    system_src_file.close();
-
-    std::ofstream outmodule("generated/system.h", std::ios::out);
-    outmodule << "#include <cmath>\n"
-              << "#include <nvector/nvector_serial.h>\n"
-              << "#include <sstream>\n\n"
-              << generate_state_indices(system)
-              << "#define NUM_DEPS " << system.max_index << "\n"
-              << generate_constant_definitions(system)
-              << generate_expression_functions(system)
-              << generate_initial_state_setter(system)
-              << generate_state_csv_label_getter(system)
-              << generate_system(system);
-
-    return 0;
 }

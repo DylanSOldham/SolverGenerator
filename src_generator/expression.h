@@ -6,14 +6,14 @@
 
 #include "tokenize.h"
 
-class System;
+class SystemDeclarations;
 
 class Expression
 {
 public:
 
-    virtual std::string generate(System& system) = 0;
-    virtual bool has_state_dependencies(System& system)
+    virtual std::string generate(SystemDeclarations& system) = 0;
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return false;
     }
@@ -28,7 +28,7 @@ public:
         : value(value)
     {}
 
-    virtual std::string generate(System& system)
+    virtual std::string generate(SystemDeclarations& system)
     {
         std::stringstream str;
         str << value;
@@ -45,8 +45,8 @@ public:
         : symbol(symbol)
     {}
 
-    virtual std::string generate(System& system);
-    virtual bool has_state_dependencies(System& system);
+    virtual std::string generate(SystemDeclarations& system);
+    virtual bool has_state_dependencies(SystemDeclarations& system);
 };
 
 class NegateExpression : public Expression
@@ -58,14 +58,14 @@ public:
         : negated_expression(negated_expression)
     {}
 
-    virtual std::string generate(System& system)
+    virtual std::string generate(SystemDeclarations& system)
     {
         std::stringstream code;
         code << "-(" << negated_expression->generate(system) << ")";
         return code.str();
     }
 
-    virtual bool has_state_dependencies(System& system)
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return negated_expression->has_state_dependencies(system);
     }
@@ -81,9 +81,9 @@ public:
         : lhs(lhs), rhs(rhs)
     {}
 
-    virtual std::string generate(System& system);
+    virtual std::string generate(SystemDeclarations& system);
 
-    virtual bool has_state_dependencies(System& system)
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
     }
@@ -99,9 +99,9 @@ public:
         : lhs(lhs), rhs(rhs)
     {}
 
-    virtual std::string generate(System& system);
+    virtual std::string generate(SystemDeclarations& system);
 
-    virtual bool has_state_dependencies(System& system)
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
     }
@@ -117,9 +117,9 @@ public:
         : lhs(lhs), rhs(rhs)
     {}
 
-    virtual std::string generate(System& system);
+    virtual std::string generate(SystemDeclarations& system);
 
-    virtual bool has_state_dependencies(System& system)
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
     }
@@ -135,9 +135,9 @@ public:
         : lhs(lhs), rhs(rhs)
     {}
 
-    virtual std::string generate(System& system);
+    virtual std::string generate(SystemDeclarations& system);
 
-    virtual bool has_state_dependencies(System& system)
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return lhs->has_state_dependencies(system) || rhs->has_state_dependencies(system);
     }
@@ -153,9 +153,9 @@ public:
         : base(base), exp(exp)
     {}
 
-    virtual std::string generate(System& system);
+    virtual std::string generate(SystemDeclarations& system);
 
-    virtual bool has_state_dependencies(System& system)
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return base->has_state_dependencies(system) || exp->has_state_dependencies(system);
     }
@@ -170,9 +170,9 @@ public:
         : base(base)
     {}
 
-    virtual std::string generate(System& system);
+    virtual std::string generate(SystemDeclarations& system);
 
-    virtual bool has_state_dependencies(System& system)
+    virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return base->has_state_dependencies(system);
     }

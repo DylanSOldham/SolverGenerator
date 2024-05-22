@@ -2,7 +2,7 @@ T = 1.0
 
 n = 1 .. 10
 d/dt C[n] = -G + n
-d/dt C[1] = -G
+d/dt C[1] = -(G)
 INITIAL C[n] = T + n
 
 d/dt G = C[1]

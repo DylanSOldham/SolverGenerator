@@ -1,6 +1,7 @@
 #include "parse.h"
 
 std::vector<Parameter> parse_parameters(std::vector<Token> tokens);
+std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens);
 
 Symbol parse_symbol(std::vector<Token>& tokens)
 {   
@@ -50,48 +51,30 @@ Symbol parse_symbol(std::vector<Token>& tokens)
     return symbol;
 }
 
-std::shared_ptr<Expression> parse_parentheses(std::vector<Token>& tokens)
-{
-    size_t paren_level = 0;
-    auto it = tokens.begin();
-    for (; it != tokens.end(); ++it)
-    {
-        if (paren_level == 0 && it->type == TokenType::RPAREN) break;
-        if (it->type == TokenType::LPAREN) paren_level += 1;
-        if (it->type == TokenType::RPAREN) paren_level -= 1;
-    }
-
-    auto subexprTokens = std::vector<Token>(tokens.begin() + 1, it - 1);
-    tokens.erase(tokens.begin(), it);
-    return parse_expression(subexprTokens);
-}
-
 enum Priority
 {
+    PRIORITY_ALL = 0,
     PRIORITY_ADD = 1,
     PRIORITY_MUL = 2,
-    PRIORITY_EXP = 3
+    PRIORITY_EXP = 3,
 };
 
 std::vector<Token> pop_subexpr_tokens(std::vector<Token>& tokens, Priority priority)
 {
-    // 3 = stop on exp
-    // 2 = stop on mul/div
-    // 1 = stop on add/sub
-    // 0 = stop on nothing 
-
-    size_t paren_level = 0;
-    size_t bracket_level = 0;
+    int paren_level = 0;
+    int bracket_level = 0;
     auto it = tokens.begin();
     for (; it != tokens.end(); ++it) 
     {
         if (it->type == TokenType::LPAREN) paren_level += 1;
         if (it->type == TokenType::RPAREN) paren_level -= 1;
         if (paren_level > 0) continue;
+        if (paren_level < 0) break;
 
         if (it->type == TokenType::LBRACKET) bracket_level += 1;
         if (it->type == TokenType::RBRACKET) bracket_level -= 1;
         if (bracket_level > 0) continue;
+        if (bracket_level < 0) break;
 
         if (priority >= Priority::PRIORITY_ADD && (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT))
         {
@@ -110,7 +93,6 @@ std::vector<Token> pop_subexpr_tokens(std::vector<Token>& tokens, Priority prior
     }
 
     auto subexpr_tokens = std::vector<Token>(tokens.begin(), it);
-
     tokens.erase(tokens.begin(), it);
     return subexpr_tokens;
 }
@@ -120,7 +102,9 @@ std::shared_ptr<Expression> parse_unary_expression(std::vector<Token>& tokens)
     if (tokens[1].type == TokenType::LPAREN)
     {
         tokens.erase(tokens.begin());
-        return parse_parentheses(tokens);
+        auto subexpr_tokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_ALL);
+
+        return parse_expression(subexpr_tokens);
     }
 
     tokens.erase(tokens.begin());
@@ -138,7 +122,12 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
         switch(tokens[0].type) 
         {
             case TokenType::LPAREN:
-                expression = parse_parentheses(tokens);
+                {
+                tokens.erase(tokens.begin());
+                auto subexpr_tokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_ALL);
+                tokens.erase(tokens.begin());
+                expression = parse_expression(subexpr_tokens);
+                }
                 continue;
             case TokenType::SYMBOL:
                 expression = std::make_shared<SymbolExpression>(parse_symbol(tokens));
@@ -173,7 +162,14 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
                 expression = std::make_unique<ExponentExpression>(expression, parse_expression(subexprTokens));
                 continue;
             case TokenType::NEGATE:
-                expression = std::make_shared<NegateExpression>(parse_unary_expression(tokens));
+                {
+                auto unary_expr = parse_unary_expression(tokens);
+                if (!unary_expr)
+                {
+                    std::cerr << "Error: Negate doesn't have a valid expression.\n";
+                }
+                expression = std::make_shared<NegateExpression>(unary_expr);
+                }
                 continue;
             case TokenType::SQRT:
                 {
@@ -186,6 +182,7 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
                 }
                 continue;
             default:
+                std::cerr << "Unable to parse expression starting with token " << tokens[0].to_string() << "\n";
                 return nullptr;
         }
     }
@@ -225,7 +222,7 @@ std::vector<Parameter> parse_parameters(std::vector<Token> tokens)
     return parameters;
 }
 
-void parse_state_definition(System& system, std::vector<Token> tokens)
+void parse_state_definition(SystemDeclarations& system, std::vector<Token> tokens)
 {
     if (tokens.size() < 2 || !tokens[1].symbol.has_value()) 
     {
@@ -247,7 +244,7 @@ void parse_state_definition(System& system, std::vector<Token> tokens)
     system.state_variables.push_back(StateVariable(symbol, std::move(rhs)));
 }
 
-void parse_initial_value(System& system, std::vector<Token> tokens)
+void parse_initial_value(SystemDeclarations& system, std::vector<Token> tokens)
 {
     tokens.erase(tokens.begin()); // Remove "INITIAL"
     Symbol symbol = parse_symbol(tokens); // Grab and remove the symbol
@@ -262,7 +259,7 @@ void parse_initial_value(System& system, std::vector<Token> tokens)
     system.initial_states.push_back(InitialState { symbol, expression });
 }
 
-void parse_expression_declaration(System& system, std::vector<Token> tokens)
+void parse_expression_declaration(SystemDeclarations& system, std::vector<Token> tokens)
 {
     Symbol symbol = parse_symbol(tokens);
     tokens.erase(tokens.begin());
@@ -286,7 +283,7 @@ void parse_expression_declaration(System& system, std::vector<Token> tokens)
     }
 }
 
-void parse_symbol_declaration(System& system, std::vector<Token> tokens) 
+void parse_symbol_declaration(SystemDeclarations& system, std::vector<Token> tokens) 
 {
     Symbol symbol = tokens[0].symbol.value();
 
@@ -300,7 +297,7 @@ void parse_symbol_declaration(System& system, std::vector<Token> tokens)
     return;
 }
 
-void parse_declaration(System& system, std::string line)
+void parse_declaration(SystemDeclarations& system, std::string line)
 {
     std::vector<Token> tokens = tokenize(line);
 
@@ -321,7 +318,7 @@ void parse_declaration(System& system, std::string line)
     }
 }
 
-void read_system(System& system, std::ifstream& stream)
+void read_system(SystemDeclarations& system, std::ifstream& stream)
 {
     std::string line;
 

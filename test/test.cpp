@@ -66,7 +66,7 @@ TEST(Parse, parse_state_definition)
 {
     std::vector<Token> tokens = tokenize("d/dt C = C");
 
-    System system;
+    SystemDeclarations system;
     parse_state_definition(system, tokens);
 
     EXPECT_EQ(system.state_variables.size(), 1);
@@ -80,7 +80,7 @@ TEST(Parse, parse_state_definition)
 TEST(Parse, AddExpression)
 {
     std::vector<Token> tokens = tokenize("A + B");
-    System system;
+    SystemDeclarations system;
     std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(AddExpression));
@@ -98,7 +98,7 @@ TEST(Parse, AddExpression)
 TEST(Parse, SubtractExpression)
 {
     std::vector<Token> tokens = tokenize("A - B");
-    System system;
+    SystemDeclarations system;
     std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(SubtractExpression));
@@ -116,7 +116,7 @@ TEST(Parse, SubtractExpression)
 TEST(Parse, NegateParentheses)
 {
     std::vector<Token> tokens = tokenize("-(A)");
-    System system;
+    SystemDeclarations system;
     std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(NegateExpression));
@@ -250,7 +250,7 @@ TEST(Parse, IndexedSymbol)
 {
     std::vector<Token> tokens = tokenize("INITIAL G[1, n, q+3] = C");
 
-    System system;
+    SystemDeclarations system;
     parse_initial_value(system, tokens);
 
     EXPECT_EQ(system.initial_states.size(), 1);
@@ -267,7 +267,7 @@ TEST(Parse, IndexedExpression)
 {
     std::vector<Token> tokens = tokenize("d/dt G = -C[1, n, g - 1]");
 
-    System system;
+    SystemDeclarations system;
     parse_state_definition(system, tokens);
 
     EXPECT_EQ(system.state_variables.size(), 1);
@@ -289,7 +289,7 @@ TEST(Parse, IndexedExpression2)
 {
     std::vector<Token> tokens = tokenize("d/dt C[n] = G - C[n]");
 
-    System system;
+    SystemDeclarations system;
     parse_state_definition(system, tokens);
 
     EXPECT_EQ(system.state_variables.size(), 1);
@@ -311,7 +311,7 @@ TEST(Generate, StateDefinition)
 {
     std::vector<Token> tokens = tokenize("d/dt C[n] = 1.0 - C[n]");
 
-    System system;
+    SystemDeclarations system;
     system.state_lists["n"] = 5;
     parse_state_definition(system, tokens);
     system.bound_parameters["n"] = 5;
