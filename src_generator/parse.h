@@ -25,28 +25,12 @@ struct InitialState
     std::shared_ptr<Expression> rhs;
 };
 
-struct Function
-{
-    Symbol symbol;
-    std::shared_ptr<Expression> rhs;
-
-    bool is_constant(SystemDeclarations& system)
-    {
-        return symbol.parameters.size() == 0 && !is_state_dependent(system);
-    }
-
-    bool is_state_dependent(SystemDeclarations& system)
-    {
-        return rhs->has_state_dependencies(system);
-    }
-};
-
 struct SystemDeclarations
 {
     std::vector<StateVariable> state_variables; // Represents the state, which may or may not include lists
     std::vector<InitialState> initial_states;
-    std::vector<Function> function_definitions;
 
+    std::vector<Function> function_definitions;
     std::map<std::string, size_t> state_lists; // The lists that have been defined
     std::map<std::string, bool> bound_parameters;
 
@@ -55,14 +39,11 @@ struct SystemDeclarations
     SymbolType resolve_symbol_type(Symbol symbol) {
         if (bound_parameters.count(symbol.name)) return SymbolType::PARAMETER;
 
-        for (auto& f : function_definitions)
-        {
-            if (f.symbol == symbol) {
-                return SymbolType::FUNCTION;
-            }
+        if (find_function_definition(symbol) != nullptr) {
+            return SymbolType::FUNCTION;
         }
 
-        // Map would probably be better
+        // std::map would probably be better than std::vector
         for (size_t i = 0; i < state_variables.size(); ++i)
         {
             if (state_variables[i].symbol == symbol) {
@@ -72,6 +53,16 @@ struct SystemDeclarations
 
         std::cerr << "Error: Undefined symbol " << symbol.name << std::endl;
         return SymbolType::UNRESOLVED;
+    }
+
+    Function* find_function_definition(Symbol symbol)
+    {
+        for (auto& f : function_definitions)
+        {
+            if (f.symbol == symbol) return &f;
+        }
+
+        return nullptr;
     }
 };
 

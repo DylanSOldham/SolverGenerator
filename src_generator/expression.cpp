@@ -1,6 +1,47 @@
 #include "expression.h"
 #include "parse.h"
 
+
+std::string FunctionDefinition::get_parameter_constraints(SystemDeclarations& system, FunctionDefinition& catchall)
+{
+    if (is_catchall())
+    {
+        std::cerr << "Warning: Tried to pull parameter constraints from a catchall definition.\n";
+        return "";
+    }
+
+    if (catchall.parameters.size() != parameters.size())
+    {
+        std::cerr << "Warning: Catchall must have the same number of parameters as constrained definitions.\n";
+        return "";
+    }
+
+    std::stringstream str;
+    bool include_and = false;
+    for (size_t i = 0; i < catchall.parameters.size(); ++i)
+    {
+        if (parameters[i].type == ParameterType::EXPRESSION)
+        {
+            auto& catchall_param = catchall.parameters[i];
+            str << (include_and ? " && " : "") << catchall_param.symbol.value_or("ERROR") << " == (" << parameters[i].expression->generate(system) << ")";
+            include_and = true;
+        }
+    }
+    return str.str();
+}
+
+bool Function::is_state_dependent(SystemDeclarations& system)
+{
+    for (auto definition : definitions)
+    {
+        if (definition.expression->has_state_dependencies(system))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::string generate_parameter_value(SystemDeclarations& system, Parameter& parameter)
 {
     std::stringstream str;

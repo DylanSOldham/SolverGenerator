@@ -123,7 +123,7 @@ std::string generate_csv_list(SystemDeclarations &system, Symbol state_symbol)
     size_t list_size = system.state_lists[list_symbol];
     str << "\n\tfor (size_t i = 0; i < " << list_size << "; ++i)";
     str << "\n\t{";
-        str << "\n\t\tstr << \", " << state_symbol.to_string() << "[\" << i + 1 << \"]\";";
+    str << "\n\t\tstr << \", " << state_symbol.to_string() << "[\" << i + 1 << \"]\";";
     str << "\n\t}\n";
 
     return str.str();
@@ -133,10 +133,18 @@ std::string generate_constant_definitions(SystemDeclarations &system)
 {
     std::stringstream str;
 
-    for (auto& function : system.function_definitions)
+    for (auto &f : system.function_definitions)
     {
-        if (!function.is_constant(system)) continue;
-        str << "\ndouble " << function.symbol.to_string() << " = " << function.rhs->generate(system) << ";";
+        if (!f.is_constant(system))
+            continue;
+
+        if (f.definitions.size() != 1)
+        {
+            std::cerr << "Error: Constant " << f.symbol.to_string() << " must have 1 and only 1 definition.\n";
+            return "0";
+        }
+
+        str << "\ndouble " << f.symbol.to_string() << " = " << f.definitions[0].expression->generate(system) << ";";
     }
 
     return str.str();
@@ -150,21 +158,23 @@ std::string generate_expression_functions(SystemDeclarations &system)
 
     for (auto &f : functions)
     {
-        if (f.is_constant(system)) continue;
+        if (f.is_constant(system))
+            continue;
+
+        auto main_definition = f.get_catchall_definition();
 
         str << "\ndouble " << f.symbol.to_string() << "(";
-
-        for (auto i = 0; i < f.symbol.parameters.size(); ++i)
+        for (auto i = 0; i < main_definition.parameters.size(); ++i)
         {
-            auto& p = f.symbol.parameters[i];
+            auto &p = main_definition.parameters[i];
             if (p.type != ParameterType::VARIABLE)
             {
-                std::cerr << "Error: Pattern matching for functions currently unsupported.\n";
+                std::cerr << "Error: Main definition of a function must only have variable parameters.\n";
                 continue;
             }
             str << (i != 0 ? ", " : "") << "double " << p.symbol.value();
         }
-        
+
         if (f.is_state_dependent(system))
         {
             str << (f.symbol.parameters.size() > 0 ? ", " : "") << "double* values";
@@ -175,40 +185,51 @@ std::string generate_expression_functions(SystemDeclarations &system)
 
     for (auto &f : functions)
     {
-        if (f.is_constant(system)) continue;
+        if (f.is_constant(system))
+            continue;
 
         auto name = f.symbol.to_string();
-        std::shared_ptr<Expression> expression = f.rhs;
-
-        if (!expression)
+        if (f.definitions.size() == 0)
         {
             std::cerr << "Error: " << name << " is missing definition.\n";
             continue;
         }
 
+        auto main_definition = f.get_catchall_definition();
+
         str << "\n\ndouble " << name << "(";
-
-            system.bound_parameters.clear();
-            for (auto i = 0; i < f.symbol.parameters.size(); ++i)
+        system.bound_parameters.clear();
+        for (auto i = 0; i < main_definition.parameters.size(); ++i)
+        {
+            auto p = main_definition.parameters[i];
+            if (p.type != ParameterType::VARIABLE)
             {
-                auto p = f.symbol.parameters[i];
-                system.bound_parameters[p.symbol.value()] = true;
-                if (p.type != ParameterType::VARIABLE)
-                {
-                    std::cerr << "Error: Pattern matching for functions currently unsupported.\n";
-                    continue;
-                }
-                str << (i != 0 ? ", " : "") << "double " << p.symbol.value();
+                std::cerr << "Error: Main definition of a function must only have variable parameters.\n";
+                continue;
             }
-        
-            if (f.is_state_dependent(system))
-            {
-                str << (f.symbol.parameters.size() > 0 ? ", " : "") << "double* values";
-            }
+            str << (i != 0 ? ", " : "") << "double " << p.symbol.value();
+            system.bound_parameters[p.symbol.value()] = true;
+        }
 
-            str << ")\n"
-            << "{\n"
-            << "    return " << expression->generate(system) << ";\n"
+        if (f.is_state_dependent(system))
+        {
+            str << (f.symbol.parameters.size() > 0 ? ", " : "") << "double* values";
+        }
+
+        str << ")"
+            << "\n{";
+
+        for (auto definition : f.definitions)
+        {
+            if (definition.is_catchall())
+                continue;
+
+            str << "\n\tif (" << definition.get_parameter_constraints(system, main_definition) << ") {"
+                << "\n\t\t return " << definition.expression->generate(system) << ";"
+                << "\n\t}";
+        }
+
+        str << "\n\treturn " << main_definition.expression->generate(system) << ";\n"
             << "}";
     }
 

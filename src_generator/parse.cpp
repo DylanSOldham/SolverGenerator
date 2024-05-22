@@ -250,6 +250,7 @@ void parse_initial_value(SystemDeclarations& system, std::vector<Token> tokens)
 void parse_expression_declaration(SystemDeclarations& system, std::vector<Token> tokens)
 {
     Symbol symbol = parse_symbol(tokens);
+
     tokens.erase(tokens.begin());
     std::shared_ptr<Expression> expression = parse_expression(tokens);
     if (!expression)
@@ -260,7 +261,14 @@ void parse_expression_declaration(SystemDeclarations& system, std::vector<Token>
 
     if (symbol.type == SymbolType::FUNCTION)
     {
-        system.function_definitions.push_back( Function { symbol, expression });
+        auto function = system.find_function_definition(symbol);
+        if (function == nullptr)
+        {
+            system.function_definitions.push_back(Function(symbol));
+            function = system.find_function_definition(symbol);
+        }
+
+        function->definitions.push_back( FunctionDefinition { symbol.parameters, expression });
         return;
     }
 }

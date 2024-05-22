@@ -48,7 +48,7 @@ dislocation_density_evolution = 300.
 
 n = 1 .. 50
 d/dt Ci[n] = i_gain(n)
-d/dt Ci[1] = i_gain(1)
+d/dt Ci[1] = i_gain(1) 
 
 
 d/dt Rho = dislocation_gain - dislocation_density_evolution * burgers_vector^2 * Rho^(3/2)

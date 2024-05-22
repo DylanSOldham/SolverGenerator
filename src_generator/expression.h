@@ -8,10 +8,65 @@
 
 class SystemDeclarations;
 
+struct FunctionDefinition
+{
+    std::vector<Parameter> parameters;
+    std::shared_ptr<Expression> expression;
+
+    bool is_catchall()
+    {
+        for (auto p : parameters) 
+        {
+            if (p.type != ParameterType::VARIABLE) 
+                return false;
+        }
+        return true;
+    }
+
+    std::string get_parameter_constraints(SystemDeclarations& system, FunctionDefinition& catchall);
+};
+
+struct Function
+{
+    Symbol symbol;
+    std::vector<FunctionDefinition> definitions;
+
+    Function()
+        : symbol("error")
+    {
+    }
+
+    Function(Symbol symbol)
+        : symbol(symbol)
+    {
+
+    }
+
+    bool is_constant(SystemDeclarations& system)
+    {
+        return symbol.parameters.size() == 0 && !is_state_dependent(system);
+    }
+
+    bool is_state_dependent(SystemDeclarations& system);
+
+    FunctionDefinition get_catchall_definition()
+    {
+        for (auto definition : definitions)
+        {
+            if (definition.is_catchall())
+            {
+                return definition;
+            }
+        }
+
+        std::cerr << "Function " << symbol.to_string() << " is missing a catch-all definition.\n";
+        return definitions[0];
+    }
+};
+
 class Expression
 {
 public:
-
     virtual std::string generate(SystemDeclarations& system) = 0;
     virtual bool has_state_dependencies(SystemDeclarations& system)
     {
