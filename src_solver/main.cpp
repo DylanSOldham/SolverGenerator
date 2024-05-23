@@ -31,10 +31,14 @@ int main()
     handleError( CVodeSStolerances(cvodes_memory_block, 1e-6, 1e-1) );
     jacobian_matrix = SUNDenseMatrix(state_size, state_size, sun_context);
     linear_solver = SUNLinSol_Dense(state, jacobian_matrix, sun_context);
+    CVodeSetMaxNumSteps(cvodes_memory_block, 5000);
+    CVodeSetMinStep(cvodes_memory_block, 1e-30);
+    CVodeSetMaxStep(cvodes_memory_block, 1e20);
+    CVodeSetInitStep(cvodes_memory_block, 1e-5);
     handleError( CVodeSetLinearSolver(cvodes_memory_block, linear_solver, jacobian_matrix) );
 
-    double tout = 10;
-    double sample_interval = 0.1;
+    double tout = 1e8;
+    double sample_interval = 1e6;
 
     std::cout << get_state_csv_label() << std::endl;
     for (double t = 0; t <= tout;)

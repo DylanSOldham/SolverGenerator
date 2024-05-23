@@ -5,7 +5,17 @@
 
 double PI = 3.14159;
 double BOLTZMAN_CONSTANT = ((8.6173) * (std::pow(10, -(5))));
-double MAX_CLUSTER_SIZE = 50;
+double MAX_CLUSTER_SIZE = 100;
+double flux = ((2.9) * (std::pow(10, -(7))));
+double temperature = ((330) + (273.15));
+double recombination = 3;
+double i_bi = 5;
+double i_tri = 2;
+double i_quad = 6;
+double v_bi = 6;
+double v_tri = 3;
+double v_quad = 2;
+double dislocation_density_evolution = 300;
 double i_migration = 0.45;
 double v_migration = 1.35;
 double i_diffusion_0 = ((1) * (std::pow(10, -(3))));
@@ -26,27 +36,10 @@ double grain_size = ((4) * (std::pow(10, -(3))));
 double lattice_param = ((3.6) * (std::pow(10, -(8))));
 double burgers_vector = ((lattice_param) / (std::sqrt(2)));
 double atomic_volume = ((std::pow(lattice_param, 3)) / (4));
-double i_diffusion = ((i_diffusion_0) * (std::exp(-(((i_migration) / (BOLTZMAN_CONSTANT))))));
-double v_diffusion = ((v_diffusion_0) * (std::exp(-(((v_migration) / (BOLTZMAN_CONSTANT))))));
-double flux = ((2.9) * (std::pow(10, -(7))));
-double temperature = ((330) + (273.15));
-double recombination = 3;
-double i_bi = 5;
-double i_tri = 2;
-double i_quad = 6;
-double v_bi = 6;
-double v_tri = 3;
-double v_quad = 2;
-double dislocation_density_evolution = 300;
-double dislocation_gain = 0;
-double i1_cluster_abs = 0;
-double i1_gb_abs = 0;
-double i1_em = 0;
+double i_diffusion = ((i_diffusion_0) * (std::exp(-(((i_migration) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
+double v_diffusion = ((v_diffusion_0) * (std::exp(-(((v_migration) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
 double Riv = ((((((4) * (PI))) * (((i_diffusion) + (v_diffusion))))) * (recombination_radius));
-double v1_d_abs = 0;
-double v1_gb_abs = 0;
-double v1_cluster_abs = 0;
-double v1_em = 0;
+double dislocation_gain = 0;
 
 const size_t INDEX_Ci_START = 0;
 const size_t INDEX_Ci_SIZE = MAX_CLUSTER_SIZE - 1 + 1;
@@ -64,18 +57,102 @@ double c_i(double n, double* values);
 double a_v(double n, double* values);
 double b_v(double n, double* values);
 double c_v(double n, double* values);
+double i1_em(double* values);
+double i1_cluster_abs(double* values);
 double i1_d_abs(double* values);
+double i1_gb_abs(double* values);
+double v1_em(double* values);
+double v1_cluster_abs(double* values);
+double v1_d_abs(double* values);
+double v1_gb_abs(double* values);
 double alpha_ii(double n);
 double alpha_vv(double n);
 double beta_ii(double n);
 double beta_iv(double n);
 double beta_vi(double n);
 double beta_vv(double n);
+double i_bias_factor(double n);
+double v_bias_factor(double n);
+double i_binding_energy(double n);
+double v_binding_energy(double n);
+double r(double n);
 
 double __summation_0(double* values) {
 	double sum = 0.0;
 	for (size_t i = 3; i < MAX_CLUSTER_SIZE; i++) {
 		sum += ((alpha_ii((i))) * (values[INDEX_Ci_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_1(double* values) {
+	double sum = 0.0;
+	for (size_t i = 1; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_ii((i))) * (values[INDEX_Ci_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_2(double* values) {
+	double sum = 0.0;
+	for (size_t i = 2; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_vi((i))) * (values[INDEX_Ci_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_3(double* values) {
+	double sum = 0.0;
+	for (size_t i = 1; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_ii((i))) * (values[INDEX_Ci_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_4(double* values) {
+	double sum = 0.0;
+	for (size_t i = 1; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_vi((i))) * (values[INDEX_Cv_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_5(double* values) {
+	double sum = 0.0;
+	for (size_t i = 3; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((alpha_vv((i))) * (values[INDEX_Ci_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_6(double* values) {
+	double sum = 0.0;
+	for (size_t i = 1; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_vv((i))) * (values[INDEX_Cv_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_7(double* values) {
+	double sum = 0.0;
+	for (size_t i = 2; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_iv((i))) * (values[INDEX_Cv_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_8(double* values) {
+	double sum = 0.0;
+	for (size_t i = 1; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_vv((i))) * (values[INDEX_Cv_START + (i) - 1]));
+	}
+	 return sum;
+}
+
+double __summation_9(double* values) {
+	double sum = 0.0;
+	for (size_t i = 1; i < MAX_CLUSTER_SIZE; i++) {
+		sum += ((beta_iv((i))) * (values[INDEX_Ci_START + (i) - 1]));
 	}
 	 return sum;
 }
@@ -144,39 +221,99 @@ double c_v(double n, double* values)
 	return ((beta_vv((n))) * (values[INDEX_Cv_START + (1) - 1]));
 }
 
-double i1_d_abs(double* values)
+double i1_em(double* values)
 {
 	return ((((__summation_0(values)) + (((((2) * (alpha_ii((2))))) * (values[INDEX_Ci_START + (2) - 1]))))) + (((((beta_iv((2))) * (values[INDEX_Cv_START + (1) - 1]))) * (values[INDEX_Ci_START + (2) - 1]))));
 }
 
+double i1_cluster_abs(double* values)
+{
+	return ((__summation_1(values)) + (__summation_2(values)));
+}
+
+double i1_d_abs(double* values)
+{
+	return ((((values[INDEX_Rho]) * (i_diffusion))) * (i_dislocation_bias));
+}
+
+double i1_gb_abs(double* values)
+{
+	return ((((((6) * (i_diffusion))) * (std::sqrt(((((((values[INDEX_Rho]) * (i_dislocation_bias))) + (__summation_3(values)))) + (__summation_4(values))))))) / (grain_size));
+}
+
+double v1_em(double* values)
+{
+	return ((((__summation_5(values)) + (((((2) * (alpha_vv((2))))) * (values[INDEX_Cv_START + (2) - 1]))))) + (((((beta_vi((2))) * (values[INDEX_Ci_START + (1) - 1]))) * (values[INDEX_Cv_START + (2) - 1]))));
+}
+
+double v1_cluster_abs(double* values)
+{
+	return ((__summation_6(values)) + (__summation_7(values)));
+}
+
+double v1_d_abs(double* values)
+{
+	return ((((values[INDEX_Rho]) * (v_diffusion))) * (v_dislocation_bias));
+}
+
+double v1_gb_abs(double* values)
+{
+	return ((((((6) * (v_diffusion))) * (std::sqrt(((((((values[INDEX_Rho]) * (v_dislocation_bias))) + (__summation_8(values)))) + (__summation_9(values))))))) / (grain_size));
+}
+
 double alpha_ii(double n)
 {
-	return 0;
+	return ((((((((((2) * (PI))) * (r((n))))) * (i_bias_factor((n))))) * (((i_diffusion) / (atomic_volume))))) * (std::exp(-(((i_binding_energy((n))) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
 }
 
 double alpha_vv(double n)
 {
-	return 0;
+	return ((((((((((2) * (PI))) * (r((n))))) * (v_bias_factor((n))))) * (((v_diffusion) / (atomic_volume))))) * (std::exp(-(((v_binding_energy((n))) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
 }
 
 double beta_ii(double n)
 {
-	return 0;
+	return ((((((((2) * (PI))) * (r((n))))) * (i_bias_factor((n))))) * (i_diffusion));
 }
 
 double beta_iv(double n)
 {
-	return 0;
+	return ((((((((2) * (PI))) * (r((n))))) * (v_bias_factor((n))))) * (v_diffusion));
 }
 
 double beta_vi(double n)
 {
-	return 0;
+	return ((((((((2) * (PI))) * (r((n))))) * (i_bias_factor((n))))) * (i_diffusion));
 }
 
 double beta_vv(double n)
 {
-	return 0;
+	return ((((((((2) * (PI))) * (r((n))))) * (v_bias_factor((n))))) * (v_diffusion));
+}
+
+double i_bias_factor(double n)
+{
+	return ((i_dislocation_bias) + (((((std::sqrt(((burgers_vector) / (((((8) * (PI))) * (lattice_param)))))) - (i_dislocation_bias))) * (((1) / (std::pow(n, ((i_dislocation_bias_param) / (2)))))))));
+}
+
+double v_bias_factor(double n)
+{
+	return ((v_dislocation_bias) + (((((std::sqrt(((burgers_vector) / (((((8) * (PI))) * (lattice_param)))))) - (v_dislocation_bias))) * (((1) / (std::pow(n, ((v_dislocation_bias_param) / (2)))))))));
+}
+
+double i_binding_energy(double n)
+{
+	return ((i_formation) + (((((((i_binding) - (i_formation))) / (std::pow(2, ((0.8) - (1)))))) * (std::pow(std::pow(n, ((0.8) - (((n) - (1))))), 0.8)))));
+}
+
+double v_binding_energy(double n)
+{
+	return ((v_formation) + (((((((v_binding) - (v_formation))) / (std::pow(2, ((0.8) - (1)))))) * (std::pow(std::pow(n, ((0.8) - (((n) - (1))))), 0.8)))));
+}
+
+double r(double n)
+{
+	return std::sqrt(((((((3) * (std::pow(lattice_param, 2)))) * (n))) / (((4) * (PI)))));
 }
 
 void get_initial_state(N_Vector state) {
@@ -224,10 +361,10 @@ int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
     {
         derivatives[INDEX_Cv_START + (n - 1)] = ((((Gv((n))) + (((((a_v((((n) + (1))), values)) * (-(b_v((n), values))))) * (values[INDEX_Cv_START + (n) - 1]))))) + (((c_v((((n) - (1))), values)) * (values[INDEX_Cv_START + (((n) - (1))) - 1]))));
     }
-    derivatives[INDEX_Rho] = ((dislocation_gain) - (((((dislocation_density_evolution) * (std::pow(burgers_vector, 2)))) * (std::pow(values[INDEX_Rho], ((3) / (2)))))));
+    derivatives[INDEX_Rho] = 0;
 
-    derivatives[INDEX_Ci_START + (size_t)(1 - 1)] = ((((((((Gi((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (-(i1_d_abs(values))))))) - (i1_gb_abs))) - (i1_cluster_abs))) + (i1_em));
-    derivatives[INDEX_Cv_START + (size_t)(1 - 1)] = ((((((((Gv((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (-(v1_d_abs)))))) - (v1_gb_abs))) - (v1_cluster_abs))) + (v1_em));
+    derivatives[INDEX_Ci_START + (size_t)(1 - 1)] = ((((((((Gi((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (-(i1_d_abs(values))))))) - (i1_gb_abs(values)))) - (i1_cluster_abs(values)))) + (i1_em(values)));
+    derivatives[INDEX_Cv_START + (size_t)(1 - 1)] = ((((((((Gv((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (-(v1_d_abs(values))))))) - (v1_gb_abs(values)))) - (v1_cluster_abs(values)))) + (v1_em(values)));
     derivatives[INDEX_Ci_START + (size_t)(MAX_CLUSTER_SIZE - 1)] = 0;
     derivatives[INDEX_Cv_START + (size_t)(MAX_CLUSTER_SIZE - 1)] = 0;
     return 0;

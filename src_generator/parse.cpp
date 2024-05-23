@@ -431,12 +431,45 @@ void parse_declaration(SystemDeclarations &system, std::string line)
     }
 }
 
-void read_system(SystemDeclarations &system, std::ifstream &stream)
+std::vector<std::string> collect_lines(std::ifstream& stream)
 {
+    std::vector<std::string> lines;
     std::string line;
 
-    while (getline(stream, line))
+    std::string chunk;
+    while (getline(stream, chunk))
     {
+        if (std::regex_search(chunk, std::regex("^[ \\t]")))
+        {
+            line += chunk;
+            continue;
+        }
+
+        std::smatch matches;
+        if (std::regex_search(chunk, matches, std::regex("(.*)#.*")))
+        {
+            lines.push_back(line);
+            line = "";
+            line += matches[1];
+            continue;
+        }
+
+        lines.push_back(line);
+        line = "";
+        line += chunk;
+    }
+
+    lines.push_back(line);
+    line.clear();
+
+    return lines;
+}
+
+void read_system(SystemDeclarations &system, std::ifstream &stream)
+{
+    auto lines = collect_lines(stream);
+
+    for (auto line : lines) {
         parse_declaration(system, line);
     }
 }
