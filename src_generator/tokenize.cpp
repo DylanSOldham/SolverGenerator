@@ -25,6 +25,7 @@ std::string get_token_type_string(TokenType type)
         case TokenType::DIVIDE: return "DIVIDE";
         case TokenType::EXPONENT: return "EXPONENT";
         case TokenType::SQRT: return "SQRT";
+        case TokenType::EXP: return "EXP";
         case TokenType::NEGATE: return "NEGATE";
         case TokenType::ASSIGN: return "ASSIGN";
         case TokenType::COMMA: return "COMMA";
@@ -134,9 +135,15 @@ std::vector<Token> tokenize(std::string line)
             continue;
         }
         
-        if (std::regex_search(line, matches, std::regex("^sqrt"))) {
+        if (std::regex_search(line, matches, std::regex("^SQRT"))) {
             tokens.push_back(Token { TokenType::SQRT });
             line = line.substr(4);
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^EXP"))) {
+            tokens.push_back(Token { TokenType::EXP });
+            line = line.substr(3);
             continue;
         }
 

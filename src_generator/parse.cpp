@@ -45,6 +45,7 @@ enum Priority
     PRIORITY_ADD = 1,
     PRIORITY_MUL = 2,
     PRIORITY_EXP = 3,
+    PRIORITY_PAREN = 4,
 };
 
 std::vector<Token> pop_subexpr_tokens(std::vector<Token>& tokens, Priority priority)
@@ -90,8 +91,7 @@ std::shared_ptr<Expression> parse_unary_expression(std::vector<Token>& tokens)
     if (tokens[1].type == TokenType::LPAREN)
     {
         tokens.erase(tokens.begin());
-        auto subexpr_tokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_ALL);
-
+        auto subexpr_tokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_PAREN);
         return parse_expression(subexpr_tokens);
     }
 
@@ -104,6 +104,11 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
 {
     std::shared_ptr<Expression> expression = nullptr;
     std::vector<Token> subexprTokens;
+                
+    std::cerr << tokens.size() << " ";
+    for (auto t : tokens)
+        std::cerr << t.to_string() << " ";
+    std::cerr << "\n";
 
     while (tokens.size() > 0)
     {
@@ -167,6 +172,16 @@ std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens)
                     std::cerr << "Error: Sqrt doesn't have a valid expression.\n";
                 }
                 expression = std::make_shared<SqrtExpression>(unary_expr);
+                }
+                continue;
+            case TokenType::EXP:
+                {
+                auto unary_expr = parse_unary_expression(tokens);
+                if (!unary_expr)
+                {
+                    std::cerr << "Error: Sqrt doesn't have a valid expression.\n";
+                }
+                expression = std::make_shared<ExpExpression>(unary_expr);
                 }
                 continue;
             default:

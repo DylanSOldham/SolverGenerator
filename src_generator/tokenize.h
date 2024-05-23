@@ -89,6 +89,7 @@ enum class TokenType {
     EXPONENT,
     NEGATE,
     SQRT,
+    EXP,
     ASSIGN,
     COMMA
 };

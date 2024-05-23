@@ -232,3 +232,20 @@ public:
         return base->has_state_dependencies(system);
     }
 };
+
+class ExpExpression : public Expression
+{
+public:
+    std::shared_ptr<Expression> exp;
+
+    ExpExpression(std::shared_ptr<Expression> exp)
+        : exp(exp)
+    {}
+
+    virtual std::string generate(SystemDeclarations& system);
+
+    virtual bool has_state_dependencies(SystemDeclarations& system)
+    {
+        return exp->has_state_dependencies(system);
+    }
+};

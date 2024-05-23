@@ -189,3 +189,10 @@ std::string SqrtExpression::generate(SystemDeclarations& system)
     code << "std::sqrt(" << base->generate(system) << ")";
     return code.str();
 }
+
+std::string ExpExpression::generate(SystemDeclarations& system)
+{
+    std::stringstream code;
+    code << "std::exp(" << exp->generate(system) << ")";
+    return code.str();
+}

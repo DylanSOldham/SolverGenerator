@@ -55,7 +55,7 @@ TEST(Tokenize, ListToken)
 
 TEST(Tokenize, SqrtToken) 
 {
-    std::string text = "sqrt(q)";
+    std::string text = "SQRT(q)";
     std::vector<Token> tokens = tokenize(text);
     
     EXPECT_EQ(tokens.size(), 4);
@@ -194,7 +194,7 @@ TEST(Parse, OrderOfOperations)
 
 TEST(Parse, Sqrt)
 {
-    std::vector<Token> tokens = tokenize("sqrt(7)");
+    std::vector<Token> tokens = tokenize("SQRT(7)");
     std::shared_ptr<Expression> expr = parse_expression(tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(SqrtExpression));
@@ -204,6 +204,19 @@ TEST(Parse, Sqrt)
 
     ConstantExpression& constant_expression = *dynamic_cast<ConstantExpression*>(sqrtexpr.base.get());
     EXPECT_EQ(constant_expression.value, 7);
+}
+
+TEST(Parse, Exp)
+{
+    std::vector<Token> tokens = tokenize("EXP(7 + 8) / 10");
+    std::shared_ptr<Expression> expr = parse_expression(tokens);
+
+    EXPECT_EQ(typeid(*expr.get()), typeid(DivideExpression));
+    DivideExpression& divexpr = *dynamic_cast<DivideExpression*>(expr.get());
+
+    EXPECT_EQ(typeid(*divexpr.lhs.get()), typeid(ExpExpression));
+    ExpExpression& expexpr = *dynamic_cast<ExpExpression*>(divexpr.lhs.get());
+    EXPECT_EQ(typeid(*expexpr.exp.get()), typeid(AddExpression));
 }
 
 TEST(Parse, ScientificNotation)
