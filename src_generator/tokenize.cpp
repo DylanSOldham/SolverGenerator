@@ -12,8 +12,8 @@ std::string get_token_type_string(TokenType type)
     {
         case TokenType::CONSTANT: return "CONSTANT";
         case TokenType::SYMBOL: return "SYMBOL";
+        case TokenType::RANGE: return "RANGE";
         case TokenType::DERIVATIVE: return "DERIVATIVE";
-        case TokenType::LIST: return "LIST";
         case TokenType::INITIAL: return "INITIAL";
         case TokenType::LPAREN: return "LPAREN";
         case TokenType::RPAREN: return "RPAREN";
@@ -24,9 +24,10 @@ std::string get_token_type_string(TokenType type)
         case TokenType::MULTIPLY: return "MULTIPLY";
         case TokenType::DIVIDE: return "DIVIDE";
         case TokenType::EXPONENT: return "EXPONENT";
+        case TokenType::NEGATE: return "NEGATE";
         case TokenType::SQRT: return "SQRT";
         case TokenType::EXP: return "EXP";
-        case TokenType::NEGATE: return "NEGATE";
+        case TokenType::SUM: return "SUM";
         case TokenType::ASSIGN: return "ASSIGN";
         case TokenType::COMMA: return "COMMA";
         default: return "UNKNOWN";
@@ -146,6 +147,12 @@ std::vector<Token> tokenize(std::string line)
             line = line.substr(3);
             continue;
         }
+        
+        if (std::regex_search(line, matches, std::regex("^SUM"))) {
+            tokens.push_back(Token { TokenType::SUM });
+            line = line.substr(3);
+            continue;
+        }
 
         if (std::regex_search(line, matches, std::regex("^\\("))) {
             tokens.push_back(Token { TokenType::LPAREN });
@@ -177,15 +184,15 @@ std::vector<Token> tokenize(std::string line)
             continue;
         }
 
-        if (std::regex_search(line, matches, std::regex("^1 ?\\.\\. ?([0-9]+)"))) {
-            tokens.push_back(Token { TokenType::LIST, std::nullopt, std::nullopt, (size_t) std::stoi(matches[1].str()) } );
-            line = line.substr(matches[0].str().size());
+        if (std::regex_search(line, matches, std::regex("^\\.\\."))) {
+            tokens.push_back(Token { TokenType::RANGE } );
+            line = line.substr(1);
             continue;
         }
 
         if (std::regex_search(line, matches, std::regex("^([0-9]+\\.?[0-9]*)"))) {
-            tokens.push_back(Token { TokenType::CONSTANT, std::nullopt, std::atof(matches[0].str().c_str()) } );
-            line = line.substr(matches[0].str().size());
+            tokens.push_back(Token { TokenType::CONSTANT, std::nullopt, std::atof(matches[1].str().c_str()) } );
+            line = line.substr(matches[1].str().size());
             continue;
         }
 

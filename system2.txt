@@ -104,7 +104,7 @@ a_v(n) = beta_vi(n) * Ci[1] + alpha_vv(n)                                       
 b_v(n) = beta_vi(n) * Cv[1] + beta_vv(n) * Cv[1] + alpha_vv(n)
 c_v(n) = beta_vv(n) * Cv[1]
 
-Riv = 4 * PI * (0.0) * recombination_radius                                                      # Pokor 3d
+Riv = 4 * PI * (0.0) * recombination_radius                                                          # Pokor 3d
 
 i1_d_abs = 0.0
 i1_gb_abs = 0.0

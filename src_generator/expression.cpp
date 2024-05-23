@@ -55,7 +55,7 @@ std::string generate_parameter_value(SystemDeclarations& system, Parameter& para
             }
             else
             {
-                std::cerr << "Error: Tried to use unbound index variable in definition.\n";
+                std::cerr << "Error: Tried to use unbound index variable " << parameter.symbol.value_or("ERROR") << " in definition.\n";
                 return "";
             }
             }
@@ -121,6 +121,15 @@ std::string SymbolExpression::generate(SystemDeclarations& system)
             }
             std::cerr << "Error: Function " << symbol.name << " is undefined.\n";
             return "0";
+        case SymbolType::SUMMATION:
+            for (auto& summation : system.summation_definitions)
+            {
+                if (summation.symbol != symbol) continue;
+                return symbol.to_string() + "(values)";
+            }
+
+            std::cerr << "Error: Could not find summation definition.\n";
+            return "0";
     }
 
     std::cerr << "Use of undefined symbol " << symbol.to_string() << ". Make sure this is intentional.\n";
@@ -135,7 +144,7 @@ bool SymbolExpression::has_state_dependencies(SystemDeclarations& system)
         if (dep.symbol == symbol) return true;
     }
 
-    return false;
+    return symbol.type != SymbolType::SUMMATION;
 }
 
 std::string AddExpression::generate(SystemDeclarations& system)

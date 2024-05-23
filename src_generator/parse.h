@@ -25,16 +25,26 @@ struct InitialState
     std::shared_ptr<Expression> rhs;
 };
 
+struct Summation
+{
+    Symbol symbol;
+    Symbol index;
+    std::shared_ptr<Expression> summand;
+    Range range;
+    static unsigned int next_id;
+};
+
 struct SystemDeclarations
 {
     std::vector<StateVariable> state_variables; // Represents the state, which may or may not include lists
     std::vector<InitialState> initial_states;
-
     std::vector<Function> function_definitions;
-    std::map<std::string, size_t> state_lists; // The lists that have been defined
+    std::vector<Summation> summation_definitions;
+
+    std::unordered_map<std::string, Range> ranges; // The ranges that have been defined
     std::map<std::string, bool> bound_parameters;
 
-    size_t max_index = 0;
+    std::string next_index = "0";
 
     SymbolType resolve_symbol_type(Symbol symbol) {
         if (bound_parameters.count(symbol.name)) return SymbolType::PARAMETER;
@@ -43,11 +53,18 @@ struct SystemDeclarations
             return SymbolType::FUNCTION;
         }
 
-        // std::map would probably be better than std::vector
+        // std::map could probably be better than std::vector
         for (size_t i = 0; i < state_variables.size(); ++i)
         {
             if (state_variables[i].symbol == symbol) {
                 return SymbolType::STATE;
+            }
+        }
+
+        for (size_t i = 0; i < summation_definitions.size(); ++i)
+        {
+            if (summation_definitions[i].symbol == symbol) {
+                return SymbolType::SUMMATION;
             }
         }
 
@@ -66,8 +83,9 @@ struct SystemDeclarations
     }
 };
 
-std::shared_ptr<Expression> parse_expression(std::vector<Token>& tokens);
+std::shared_ptr<Expression> parse_expression(SystemDeclarations& system, std::vector<Token>& tokens);
 void parse_state_definition(SystemDeclarations& system, std::vector<Token> tokens);
+void parse_symbol_declaration(SystemDeclarations& system, std::vector<Token> tokens);
 void parse_initial_value(SystemDeclarations& system, std::vector<Token> tokens);
 void parse_declaration(SystemDeclarations& system, std::string line);
 void read_system(SystemDeclarations& system, std::ifstream& stream);

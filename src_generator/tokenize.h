@@ -32,6 +32,7 @@ enum class SymbolType
     UNRESOLVED,
     STATE,
     FUNCTION,
+    SUMMATION,
     PARAMETER
 };
 
@@ -76,7 +77,7 @@ enum class TokenType {
     CONSTANT,
     SYMBOL,
     DERIVATIVE,
-    LIST,
+    RANGE,
     INITIAL,
     LPAREN,
     RPAREN,
@@ -90,6 +91,7 @@ enum class TokenType {
     NEGATE,
     SQRT,
     EXP,
+    SUM,
     ASSIGN,
     COMMA
 };

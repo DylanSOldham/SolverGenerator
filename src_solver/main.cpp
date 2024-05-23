@@ -19,7 +19,7 @@ int main()
     SUNMatrix jacobian_matrix;
     SUNLinearSolver linear_solver;
     void* cvodes_memory_block;
-    size_t state_size = NUM_DEPS;
+    size_t state_size = STATE_SIZE;
 
     handleError( SUNContext_Create(SUN_COMM_NULL, &sun_context) );
 

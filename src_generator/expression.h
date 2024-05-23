@@ -64,6 +64,17 @@ struct Function
     }
 };
 
+struct Range
+{
+    std::shared_ptr<Expression> start;
+    std::shared_ptr<Expression> end;
+
+    Range() {}
+    Range(std::shared_ptr<Expression> start, std::shared_ptr<Expression> end)
+        : start(start), end(end)
+    {}
+};
+
 class Expression
 {
 public:
@@ -247,5 +258,21 @@ public:
     virtual bool has_state_dependencies(SystemDeclarations& system)
     {
         return exp->has_state_dependencies(system);
+    }
+};
+
+class RangeExpression : public Expression
+{
+public:
+    Range range;
+
+    RangeExpression(std::shared_ptr<Expression> start, std::shared_ptr<Expression> end)
+        : range(start, end)
+    {}
+
+    virtual std::string generate(SystemDeclarations& system)
+    {
+        std::cerr << "Error: Range expression must be either standalone or used for a summation.\n";
+        return "";
     }
 };

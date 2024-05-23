@@ -43,14 +43,15 @@ TEST(Tokenize, IndexedDerivativeTokens)
     EXPECT_EQ(tokens[7].symbol.value().name, "z");
 }
 
-TEST(Tokenize, ListToken) 
+TEST(Tokenize, RangeToken) 
 {
     std::string text = "1 .. 3";
     std::vector<Token> tokens = tokenize(text);
 
-    EXPECT_EQ(tokens.size(), 1);
-    EXPECT_EQ(tokens[0].type, TokenType::LIST);
-    EXPECT_EQ(tokens[0].list_size, 3);
+    EXPECT_EQ(tokens.size(), 3);
+    EXPECT_EQ(tokens[0].type, TokenType::CONSTANT);
+    EXPECT_EQ(tokens[1].type, TokenType::RANGE);
+    EXPECT_EQ(tokens[2].type, TokenType::CONSTANT);
 }
 
 TEST(Tokenize, SqrtToken) 
@@ -81,7 +82,7 @@ TEST(Parse, AddExpression)
 {
     std::vector<Token> tokens = tokenize("A + B");
     SystemDeclarations system;
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(AddExpression));
 
@@ -99,7 +100,7 @@ TEST(Parse, SubtractExpression)
 {
     std::vector<Token> tokens = tokenize("A - B");
     SystemDeclarations system;
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(SubtractExpression));
 
@@ -117,7 +118,7 @@ TEST(Parse, NegateParentheses)
 {
     std::vector<Token> tokens = tokenize("-(A)");
     SystemDeclarations system;
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(NegateExpression));
 
@@ -130,7 +131,8 @@ TEST(Parse, NegateParentheses)
 TEST(Parse, TrickyNegate)
 {
     std::vector<Token> tokens = tokenize("- A + B");
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(AddExpression));
 
@@ -150,7 +152,8 @@ TEST(Parse, TrickyNegate)
 TEST(Parse, TrickyExponent)
 {
     std::vector<Token> tokens = tokenize("- A ^ C[1] + B");
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(AddExpression));
 
@@ -174,7 +177,8 @@ TEST(Parse, TrickyExponent)
 TEST(Parse, OrderOfOperations)
 {
     std::vector<Token> tokens = tokenize("A + B * C ^ D * E + F");
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(AddExpression));
     AddExpression add_expr_1 = *dynamic_cast<AddExpression*>(expr.get());
@@ -195,7 +199,8 @@ TEST(Parse, OrderOfOperations)
 TEST(Parse, Sqrt)
 {
     std::vector<Token> tokens = tokenize("SQRT(7)");
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(SqrtExpression));
 
@@ -209,7 +214,8 @@ TEST(Parse, Sqrt)
 TEST(Parse, Exp)
 {
     std::vector<Token> tokens = tokenize("EXP(7 + 8) / 10");
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(DivideExpression));
     DivideExpression& divexpr = *dynamic_cast<DivideExpression*>(expr.get());
@@ -222,7 +228,8 @@ TEST(Parse, Exp)
 TEST(Parse, ScientificNotation)
 {
     std::vector<Token> tokens = tokenize("10 ^ -3");
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(ExponentExpression));
 
@@ -242,7 +249,8 @@ TEST(Parse, ScientificNotation)
 TEST(Parse, NegateAndDivide)
 {
     std::vector<Token> tokens = tokenize("- A / B");
-    std::shared_ptr<Expression> expr = parse_expression(tokens);
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
 
     EXPECT_EQ(typeid(*expr.get()), typeid(NegateExpression));
 
@@ -298,6 +306,36 @@ TEST(Parse, IndexedExpression)
     EXPECT_TRUE(dynamic_cast<SubtractExpression*>(indices[2].expression.get()));
 }
 
+TEST(Parse, SummationDeclaration)
+{
+    std::vector<Token> tokens = tokenize("G = SUM(x = 1 .. 5, x^2)");
+
+    SystemDeclarations system;
+    parse_symbol_declaration(system, tokens);
+
+    EXPECT_EQ(system.summation_definitions.size(), 1);
+    EXPECT_EQ(system.function_definitions.size(), 1);
+    EXPECT_TRUE(dynamic_cast<ExponentExpression*>(system.summation_definitions[0].summand.get()));
+}
+
+TEST(Parse, Range)
+{
+    std::vector<Token> tokens = tokenize("G = 1 .. 5");
+
+    SystemDeclarations system;
+    parse_symbol_declaration(system, tokens);
+    
+    EXPECT_EQ(system.ranges.size(), 1);
+
+    auto start = dynamic_cast<ConstantExpression*>(system.ranges["G"].start.get());
+    EXPECT_TRUE(start);
+    EXPECT_EQ(start->value, 1);
+
+    auto end = dynamic_cast<ConstantExpression*>(system.ranges["G"].end.get());
+    EXPECT_TRUE(end);
+    EXPECT_EQ(end->value, 5);
+}
+
 TEST(Parse, IndexedExpression2)
 {
     std::vector<Token> tokens = tokenize("d/dt C[n] = G - C[n]");
@@ -325,9 +363,9 @@ TEST(Generate, StateDefinition)
     std::vector<Token> tokens = tokenize("d/dt C[n] = 1.0 - C[n]");
 
     SystemDeclarations system;
-    system.state_lists["n"] = 5;
+    system.ranges["n"] = Range();
     parse_state_definition(system, tokens);
-    system.bound_parameters["n"] = 5;
+    system.bound_parameters["n"] = true;
     
     EXPECT_TRUE(system.state_variables.size() == 1);
     ASSERT_EQ(system.state_variables[0].rhs->generate(system), "((1) - (values[INDEX_C_START + (n) - 1]))");
