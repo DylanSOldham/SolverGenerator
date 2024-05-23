@@ -13,10 +13,10 @@ int main(int argc, char **argv)
     outmodule << "#include <cmath>\n"
               << "#include <nvector/nvector_serial.h>\n"
               << "#include <sstream>\n\n"
-              << generate_constant_definitions(system)
-              << generate_state_indices(system)
+              << generate_constant_definitions(system) 
+              << "\n\n" << generate_state_indices(system)
               << "\n#define STATE_SIZE " << system.next_index << ";"
-              << generate_function_declarations(system)
+              << "\n" << generate_function_declarations(system)
               << generate_summation_definitions(system)
               << generate_function_definitions(system)
               << generate_initial_state_setter(system)

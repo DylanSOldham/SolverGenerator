@@ -144,7 +144,15 @@ bool SymbolExpression::has_state_dependencies(SystemDeclarations& system)
         if (dep.symbol == symbol) return true;
     }
 
-    return symbol.type != SymbolType::SUMMATION;
+    if (symbol.type == SymbolType::SUMMATION)
+    {
+        for (auto& summation : system.summation_definitions)
+        {
+            if (summation.symbol == symbol && summation.summand->has_state_dependencies(system)) return true;
+        }
+    }
+
+    return false;
 }
 
 std::string AddExpression::generate(SystemDeclarations& system)

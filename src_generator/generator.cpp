@@ -11,16 +11,18 @@
 
 std::string generate_index_range(SystemDeclarations &system, Symbol state_symbol)
 {
-    if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
+    for (auto p : state_symbol.parameters) // Skip constrained definitions - only the catchall needs indices
     {
-        std::cerr << "Warning: Skipping index generation for a non variable list parameter." << std::endl;
-        return "";
+        if (p.type != ParameterType::VARIABLE)
+        {
+            return "";
+        }
     }
 
     auto &range_symbol = state_symbol.parameters[0].symbol.value();
     if (!system.ranges.count(range_symbol))
     {
-        std::cerr << "Error: Tried to generate indices for a list which doesn't exist.\n";
+        std::cerr << "Error: Tried to generate indices for a list " << range_symbol << " which doesn't exist.\n";
         return "";
     }
 
@@ -70,6 +72,14 @@ std::string generate_setter_list(SystemDeclarations &system, InitialState &initi
 
 std::string generate_derivative_list(SystemDeclarations &system, StateVariable &state_variable)
 {
+    for (auto p : state_variable.symbol.parameters) // Skip constrained definitions - they're handled in a separate pass
+    {
+        if (p.type != ParameterType::VARIABLE)
+        {
+            return "";
+        }
+    }
+    
     if (state_variable.symbol.parameters[0].type != ParameterType::VARIABLE)
     {
         std::cerr << "Warning: Trying to generate indices for a non variable list parameter." << std::endl;
@@ -104,10 +114,12 @@ std::string generate_derivative_list(SystemDeclarations &system, StateVariable &
 
 std::string generate_csv_list(SystemDeclarations &system, Symbol state_symbol)
 {
-    if (state_symbol.parameters[0].type != ParameterType::VARIABLE)
+    for (auto p : state_symbol.parameters) // Skip constrained definitions - catchall provides all labels
     {
-        std::cerr << "Warning: Skipping csv label generation for a non variable list parameter." << std::endl;
-        return "";
+        if (p.type != ParameterType::VARIABLE)
+        {
+            return "";
+        }
     }
 
     auto &range_symbol = state_symbol.parameters[0].symbol.value();
@@ -256,7 +268,7 @@ std::string generate_state_indices(SystemDeclarations &system)
         }
         else
         {
-            str << "const size_t INDEX_" << state_variables[i].symbol.to_string() << " = " << system.next_index << ";\n";
+            str << "\nconst size_t INDEX_" << state_variables[i].symbol.to_string() << " = " << system.next_index << ";";
             system.next_index = "INDEX_" + state_variables[i].symbol.to_string() + " + 1";
         }
     }

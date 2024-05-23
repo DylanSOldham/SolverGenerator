@@ -318,6 +318,17 @@ TEST(Parse, SummationDeclaration)
     EXPECT_TRUE(dynamic_cast<ExponentExpression*>(system.summation_definitions[0].summand.get()));
 }
 
+TEST(Parse, RangeDeclaration)
+{
+    std::vector<Token> tokens = tokenize("G = 1 .. END_OF_RANGE");
+
+    SystemDeclarations system;
+    parse_symbol_declaration(system, tokens);
+
+    EXPECT_EQ(system.ranges.size(), 1);
+    EXPECT_EQ(system.state_variables.size(), 0);
+}
+
 TEST(Parse, Range)
 {
     std::vector<Token> tokens = tokenize("G = 1 .. 5");

@@ -184,15 +184,8 @@ std::shared_ptr<Expression> parse_sum(SystemDeclarations &system, std::vector<To
     }
     tokens.erase(tokens.begin(), subexpr_it + 1);
 
-    auto expr_it = std::find_if(tokens.begin(), tokens.end(), [](Token t)
-                                { return t.type == TokenType::RPAREN; });
-    if (expr_it == tokens.end())
-    {
-        std::cerr << "Error: Missing closing parenthesis in SUM expression.\n";
-        return nullptr;
-    }
-
-    auto summand_tokens = std::vector<Token>(tokens.begin(), expr_it);
+    auto summand_tokens = pop_subexpr_tokens(tokens, Priority::PRIORITY_ALL);
+    tokens.erase(tokens.begin());
 
     auto summand_expression = parse_expression(system, summand_tokens);
     if (!summand_expression)
@@ -205,8 +198,6 @@ std::shared_ptr<Expression> parse_sum(SystemDeclarations &system, std::vector<To
     summation_symbol.type = SymbolType::SUMMATION;
     system.summation_definitions.push_back(
         Summation{summation_symbol, index_symbol.value(), summand_expression, range.value()});
-
-    tokens.erase(tokens.begin(), expr_it + 1);
 
     return std::make_shared<SymbolExpression>(summation_symbol);
 }
@@ -323,6 +314,14 @@ std::vector<Parameter> parse_parameters(SystemDeclarations &system, std::vector<
         {
             parameter.type = ParameterType::VARIABLE;
             parameter.symbol = parameter_tokens[0].symbol.value().name;
+            for (auto d : system.function_definitions)
+            {
+                if (d.symbol.name == parameter_tokens[0].symbol.value().name)
+                {
+                    parameter.type = ParameterType::EXPRESSION;
+                    parameter.expression = std::make_shared<SymbolExpression>(parameter.symbol.value());
+                }
+            }
             parameters.push_back(parameter);
         }
         else
