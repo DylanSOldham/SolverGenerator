@@ -79,6 +79,7 @@ enum class TokenType {
     DERIVATIVE,
     RANGE,
     INITIAL,
+    OUTPUT,
     LPAREN,
     RPAREN,
     LBRACKET,
@@ -93,7 +94,8 @@ enum class TokenType {
     EXP,
     SUM,
     ASSIGN,
-    COMMA
+    COMMA,
+    TAG
 };
 
 std::string get_token_type_string(TokenType type);

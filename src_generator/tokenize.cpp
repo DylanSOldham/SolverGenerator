@@ -15,6 +15,7 @@ std::string get_token_type_string(TokenType type)
         case TokenType::RANGE: return "RANGE";
         case TokenType::DERIVATIVE: return "DERIVATIVE";
         case TokenType::INITIAL: return "INITIAL";
+        case TokenType::OUTPUT: return "OUTPUT";
         case TokenType::LPAREN: return "LPAREN";
         case TokenType::RPAREN: return "RPAREN";
         case TokenType::LBRACKET: return "LBRACKET";
@@ -30,6 +31,7 @@ std::string get_token_type_string(TokenType type)
         case TokenType::SUM: return "SUM";
         case TokenType::ASSIGN: return "ASSIGN";
         case TokenType::COMMA: return "COMMA";
+        case TokenType::TAG: return "TAG";
         default: return "UNKNOWN";
     }
 }
@@ -100,7 +102,7 @@ std::vector<Token> tokenize(std::string line)
 
         if (std::regex_search(line, matches, std::regex("^\\-"))) {
             if (tokens.size() > 0 && (tokens.back().type == TokenType::CONSTANT 
-                || tokens.back().type == TokenType::SYMBOL || tokens.back().type == TokenType::RPAREN))
+                || tokens.back().type == TokenType::SYMBOL || tokens.back().type == TokenType::RPAREN || tokens.back().type == TokenType::RBRACKET))
             {
                 tokens.push_back(Token { TokenType::SUBTRACT });
             }
@@ -127,6 +129,12 @@ std::vector<Token> tokenize(std::string line)
         if (std::regex_search(line, matches, std::regex("^\\^"))) {
             tokens.push_back(Token { TokenType::EXPONENT });
             line = line.substr(1);
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^OUTPUT"))) {
+            tokens.push_back(Token { TokenType::OUTPUT });
+            line = line.substr(6);
             continue;
         }
         

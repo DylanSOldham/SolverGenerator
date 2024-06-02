@@ -78,13 +78,7 @@ std::vector<Token> pop_subexpr_tokens(std::vector<Token> &tokens, Priority prior
             break;
 
         if (priority >= Priority::PRIORITY_ADD && (it->type == TokenType::ADD || it->type == TokenType::SUBTRACT))
-        {
-            // Special exception allowing negate expressions to be alone in exponents
-            if (priority == Priority::PRIORITY_EXP && it == tokens.begin() + 1 && it->type == TokenType::SUBTRACT)
-                continue;
-
             break;
-        }
 
         if (priority >= Priority::PRIORITY_MUL && (it->type == TokenType::MULTIPLY || it->type == TokenType::DIVIDE))
             break;
@@ -409,6 +403,20 @@ void parse_symbol_declaration(SystemDeclarations &system, std::vector<Token> tok
     }
 }
 
+void parse_output_value(SystemDeclarations &system, std::vector<Token> tokens)
+{
+    tokens.erase(tokens.begin());                 // Remove "OUTPUT"
+    Symbol symbol = parse_symbol(system, tokens); // Grab and remove the label symbol
+
+    std::shared_ptr<Expression> expression = parse_expression(system, tokens);
+    if (!expression)
+    {
+        std::cerr << "Error: Malformed expression for output value " << symbol.name << "\n";
+        return;
+    }
+    system.additional_outputs.push_back(ExpressionOutput{symbol, expression});
+}
+
 void parse_declaration(SystemDeclarations &system, std::string line)
 {
     std::vector<Token> tokens = tokenize(line);
@@ -427,6 +435,8 @@ void parse_declaration(SystemDeclarations &system, std::string line)
     case TokenType::INITIAL:
         parse_initial_value(system, tokens);
         break;
+    case TokenType::OUTPUT:
+        parse_output_value(system, tokens);
         break;
     }
 }

@@ -10,18 +10,18 @@ int main(int argc, char **argv)
     system_src_file.close();
 
     std::ofstream outmodule("generated/system.h", std::ios::out);
-    outmodule << "#include <cmath>\n"
-              << "#include <nvector/nvector_serial.h>\n"
-              << "#include <sstream>\n\n"
+    outmodule << "#include <cmath>"
+              << "\n#include <nvector/nvector_serial.h>"
+              << "\n#include <sstream>"
               << generate_constant_definitions(system) 
-              << "\n\n" << generate_state_indices(system)
-              << "\n#define STATE_SIZE " << system.next_index << ";"
-              << "\n" << generate_function_declarations(system)
+              << generate_state_indices(system)
+              << "\nconst size_t STATE_SIZE =" << system.next_index << ";"
+              << generate_function_declarations(system)
               << generate_summation_definitions(system)
               << generate_function_definitions(system)
+              << generate_csv_getters(system)
               << generate_initial_state_setter(system)
-              << generate_state_csv_label_getter(system)
-              << generate_system(system);
+              << generate_derivative(system);
 
     return 0;
 }

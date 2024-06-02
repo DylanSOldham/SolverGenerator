@@ -25,6 +25,12 @@ struct InitialState
     std::shared_ptr<Expression> rhs;
 };
 
+struct ExpressionOutput
+{
+    Symbol label;
+    std::shared_ptr<Expression> rhs;
+};
+
 struct Summation
 {
     Symbol symbol;
@@ -38,6 +44,7 @@ struct SystemDeclarations
 {
     std::vector<StateVariable> state_variables; // Represents the state, which may or may not include lists
     std::vector<InitialState> initial_states;
+    std::vector<ExpressionOutput> additional_outputs;
     std::vector<Function> function_definitions;
     std::vector<Summation> summation_definitions;
 

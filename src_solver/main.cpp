@@ -2,7 +2,7 @@
 
 #include <cvodes/cvodes.h>
 #include <nvector/nvector_serial.h>
-#include <sunlinsol/sunlinsol_dense.h>
+#include <sunlinsol/sunlinsol_spgmr.h>
 #include <sunmatrix/sunmatrix_dense.h> 
 
 #include "../generated/system.h"
@@ -12,11 +12,15 @@ void handleError(int sunerr)
     if (sunerr) std::cout << SUNGetErrMsg(sunerr) << "\n";
 }
 
+int p_solve(sunrealtype t, N_Vector y, N_Vector fy, N_Vector r, N_Vector z, sunrealtype gamma, sunrealtype delta, int lr, void *user_data)
+{
+    return 0;
+}
+
 int main()
 {
     SUNContext sun_context;
     N_Vector state;
-    SUNMatrix jacobian_matrix;
     SUNLinearSolver linear_solver;
     void* cvodes_memory_block;
     size_t state_size = STATE_SIZE;
@@ -27,15 +31,15 @@ int main()
     get_initial_state(state);
     
     cvodes_memory_block = CVodeCreate(CV_BDF, sun_context);
-    handleError( CVodeInit(cvodes_memory_block, system, 0, state) );
-    handleError( CVodeSStolerances(cvodes_memory_block, 1e-6, 1e-1) );
-    jacobian_matrix = SUNDenseMatrix(state_size, state_size, sun_context);
-    linear_solver = SUNLinSol_Dense(state, jacobian_matrix, sun_context);
-    CVodeSetMaxNumSteps(cvodes_memory_block, 5000);
+    handleError( CVodeInit(cvodes_memory_block, derivative, 0, state) );
+    handleError( CVodeSStolerances(cvodes_memory_block, 1e-6, 1e9) );
+    linear_solver = SUNLinSol_SPGMR(state, SUN_PREC_NONE, 0, sun_context);
+    CVodeSetMaxNumSteps(cvodes_memory_block, 50000);
     CVodeSetMinStep(cvodes_memory_block, 1e-30);
-    CVodeSetMaxStep(cvodes_memory_block, 1e20);
-    CVodeSetInitStep(cvodes_memory_block, 1e-5);
-    handleError( CVodeSetLinearSolver(cvodes_memory_block, linear_solver, jacobian_matrix) );
+    CVodeSetMaxStep(cvodes_memory_block, 1e5);
+    CVodeSetInitStep(cvodes_memory_block, 1e-10);
+    handleError( CVodeSetLinearSolver(cvodes_memory_block, linear_solver, NULL) );
+    handleError( CVodeSetPreconditioner(cvodes_memory_block, NULL, p_solve) );
 
     double tout = 1e8;
     double sample_interval = 1e6;
@@ -43,16 +47,13 @@ int main()
     std::cout << get_state_csv_label() << std::endl;
     for (double t = 0; t <= tout;)
     {
-        handleError( CVode(cvodes_memory_block, t + sample_interval, state, &t, CV_NORMAL) );
+        int sunerr = CVode(cvodes_memory_block, t + sample_interval, state, &t, CV_NORMAL);
+        if (sunerr) break;
         std::cout << t;
-        for (size_t i = 0; i < state_size; ++i) {
-            std::cout << ", " << N_VGetArrayPointer(state)[i];
-        }
-        std::cout << "\n";
+        std::cout << get_csv_line(state) << "\n";
     }
 
     N_VDestroy_Serial(state);
-    SUNMatDestroy(jacobian_matrix);
     SUNLinSolFree(linear_solver);
     CVodeFree(&cvodes_memory_block);
     SUNContext_Free(&sun_context);

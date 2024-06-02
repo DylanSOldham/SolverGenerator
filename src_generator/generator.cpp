@@ -29,8 +29,8 @@ std::string generate_index_range(SystemDeclarations &system, Symbol state_symbol
     std::stringstream str;
 
     auto range = system.ranges[range_symbol];
-    str << "const size_t INDEX_" << state_symbol.to_string() << "_START = " << system.next_index << ";\n";
-    str << "const size_t INDEX_" << state_symbol.to_string() << "_SIZE = " << range.end->generate(system) << " - " << range.start->generate(system) << " + 1;\n";
+    str << "\nconst size_t INDEX_" << state_symbol.to_string() << "_START = " << system.next_index << ";";
+    str << "\nconst size_t INDEX_" << state_symbol.to_string() << "_SIZE = " << range.end->generate(system) << " - " << range.start->generate(system) << " + 1;";
     system.next_index = "INDEX_" + state_symbol.to_string() + "_START + INDEX_" + state_symbol.to_string() + "_SIZE";
 
     return str.str();
@@ -260,6 +260,7 @@ std::string generate_state_indices(SystemDeclarations &system)
     std::stringstream str;
     auto &state_variables = system.state_variables;
 
+    str << "\n";
     for (size_t i = 0; i < state_variables.size(); ++i)
     {
         if (state_variables[i].symbol.is_list())
@@ -340,7 +341,7 @@ std::string generate_initial_state_setter(SystemDeclarations &system)
         }
     }
 
-    str << "}\n\n";
+    str << "}";
 
     return str.str();
 }
@@ -382,13 +383,13 @@ std::string generate_derivative_definitions(SystemDeclarations &system)
     return str.str();
 }
 
-std::string generate_state_csv_label_getter(SystemDeclarations &system)
+std::string generate_csv_getters(SystemDeclarations &system)
 {
     std::stringstream str;
 
     auto &deps = system.state_variables;
 
-    str << "std::string get_state_csv_label() {";
+    str << "\n\nstd::string get_state_csv_label() {";
 
     str << "\n\tstd::stringstream str; "
         << "\n\tstr << \"t (seconds)\";";
@@ -403,20 +404,37 @@ std::string generate_state_csv_label_getter(SystemDeclarations &system)
             str << "\n\tstr << \", " << deps[i].symbol.to_string() << "\";";
         }
     }
+    for (auto out : system.additional_outputs)
+    {
+        str << "\n\tstr << \", " << out.label.to_string() << "\";";
+    }
     str << "\n\treturn str.str();";
 
     str << "\n}\n\n";
 
+    str << "std::string get_csv_line(N_Vector state) {"
+        << "\n\tstd::stringstream str;"
+        << "\n\tdouble* values = N_VGetArrayPointer(state);"
+        << "\n\tfor (size_t i = 0; i < STATE_SIZE; ++i) {"
+        << "\n\t\tstr << \", \" << values[i];"
+        << "\n\t}";
+        for (auto out : system.additional_outputs)
+        {
+            str << "\n\tstr << \", \" << " << out.rhs->generate(system) << ";";
+        }
+        str << "\n\treturn str.str();"
+        << "\n}";
+
     return str.str();
 }
 
-std::string generate_system(SystemDeclarations &system)
+std::string generate_derivative(SystemDeclarations &system)
 {
     std::stringstream str;
 
     auto &deps = system.state_variables;
 
-    str << "int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {\n"
+    str << "\n\nint derivative(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {\n"
         << "    double* values = N_VGetArrayPointer(y);\n"
         << "    double* derivatives = N_VGetArrayPointer(ydot);\n"
         << generate_derivative_definitions(system)

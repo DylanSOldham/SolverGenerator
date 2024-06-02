@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-project(DiffEqSolverTest)
+project(DiffEqSolverTest LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
@@ -20,6 +20,9 @@ add_executable(generator ./src_generator/main.cpp ./src_generator/generator.cpp 
 
 add_executable(solver ./src_solver/main.cpp)
 target_link_libraries(solver SUNDIALS::cvode SUNDIALS::nvecserial)
+
+add_executable(solver_scratch ./src_solver_scratch/main.cu)
+target_link_libraries(solver_scratch SUNDIALS::cvode SUNDIALS::nvecserial SUNDIALS::sunmatrixcusparse_static cudart cusparse )
 
 add_executable(tests ./test/test.cpp ./src_generator/tokenize.cpp ./src_generator/parse.cpp ./src_generator/expression.cpp)
 target_link_libraries(tests GTest::gtest_main)

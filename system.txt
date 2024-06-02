@@ -1,12 +1,2 @@
-T = 1.0 - C[1]
-
-n = 1 .. 10
-d/dt C[n] = -G + n
-d/dt C[1] = -(G)
-INITIAL C[n] = T + n
-
-d/dt G = C[1]
-INITIAL G = -cm_to_m(5.0, 1.90)
-
-cm_to_m(x, n) = EXP(n - x) / 100
-              - SUM(i = 1 .. 5, C[i] ^ 2)
+d/dt C = -C
+INITIAL C = 10.0

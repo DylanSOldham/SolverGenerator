@@ -267,6 +267,19 @@ TEST(Parse, NegateAndDivide)
     EXPECT_EQ(rhsExpr.symbol.name, std::string("B"));
 }
 
+TEST(Parse, ExponentThenSubtract)
+{
+    std::vector<Token> tokens = tokenize("2^0.8 - 1");
+    SystemDeclarations system;
+    std::shared_ptr<Expression> expr = parse_expression(system, tokens);
+
+    EXPECT_EQ(typeid(*expr.get()), typeid(SubtractExpression));
+    SubtractExpression& subexpr = *dynamic_cast<SubtractExpression*>(expr.get());
+
+    EXPECT_EQ(typeid(*subexpr.lhs.get()), typeid(ExponentExpression));
+    EXPECT_EQ(typeid(*subexpr.rhs.get()), typeid(ConstantExpression));
+}
+
 TEST(Parse, IndexedSymbol)
 {
     std::vector<Token> tokens = tokenize("INITIAL G[1, n, q+3] = C");

@@ -1,20 +1,18 @@
 #include <cmath>
 #include <nvector/nvector_serial.h>
 #include <sstream>
-
-
 double PI = 3.14159;
 double BOLTZMAN_CONSTANT = ((8.6173) * (std::pow(10, -(5))));
-double MAX_CLUSTER_SIZE = 100;
+double MAX_CLUSTER_SIZE = 10000;
 double flux = ((2.9) * (std::pow(10, -(7))));
 double temperature = ((330) + (273.15));
-double recombination = 3;
-double i_bi = 5;
-double i_tri = 2;
-double i_quad = 6;
-double v_bi = 6;
-double v_tri = 3;
-double v_quad = 2;
+double recombination = 0.3;
+double i_bi = 0.5;
+double i_tri = 0.2;
+double i_quad = 0.06;
+double v_bi = 0.06;
+double v_tri = 0.03;
+double v_quad = 0.02;
 double dislocation_density_evolution = 300;
 double i_migration = 0.45;
 double v_migration = 1.35;
@@ -45,10 +43,8 @@ const size_t INDEX_Ci_START = 0;
 const size_t INDEX_Ci_SIZE = MAX_CLUSTER_SIZE - 1 + 1;
 const size_t INDEX_Cv_START = INDEX_Ci_START + INDEX_Ci_SIZE;
 const size_t INDEX_Cv_SIZE = MAX_CLUSTER_SIZE - 1 + 1;
-
 const size_t INDEX_Rho = INDEX_Cv_START + INDEX_Cv_SIZE;
-#define STATE_SIZE INDEX_Rho + 1;
-
+const size_t STATE_SIZE =INDEX_Rho + 1;
 double Gi(double n);
 double Gv(double n);
 double a_i(double n, double* values);
@@ -160,10 +156,10 @@ double __summation_9(double* values) {
 double Gi(double n)
 {
 	if (n == (1)) {
-		 return ((((((flux) * (recombination))) * (((((((1) - (i_bi))) - (i_tri))) - (i_quad))))) / (atomic_volume));
+		 return ((((((flux) * (recombination))) * (((((1) - (i_tri))) - (i_quad))))) / (atomic_volume));
 	}
 	if (n == (2)) {
-		 return ((((((flux) * (recombination))) * (i_bi))) / (atomic_volume));
+		 return 0;
 	}
 	if (n == (3)) {
 		 return ((((((flux) * (recombination))) * (i_tri))) / (atomic_volume));
@@ -223,7 +219,7 @@ double c_v(double n, double* values)
 
 double i1_em(double* values)
 {
-	return ((((__summation_0(values)) + (((((2) * (alpha_ii((2))))) * (values[INDEX_Ci_START + (2) - 1]))))) + (((((beta_iv((2))) * (values[INDEX_Cv_START + (1) - 1]))) * (values[INDEX_Ci_START + (2) - 1]))));
+	return ((((__summation_0(values)) + (((((3) * (alpha_ii((3))))) * (values[INDEX_Ci_START + (3) - 1]))))) + (((((((2) * (beta_iv((3))))) * (values[INDEX_Cv_START + (1) - 1]))) * (values[INDEX_Ci_START + (3) - 1]))));
 }
 
 double i1_cluster_abs(double* values)
@@ -316,21 +312,6 @@ double r(double n)
 	return std::sqrt(((((((3) * (std::pow(lattice_param, 2)))) * (n))) / (((4) * (PI)))));
 }
 
-void get_initial_state(N_Vector state) {
-    double* values = N_VGetArrayPointer(state);
-
-    for (size_t n = 1; n <= MAX_CLUSTER_SIZE; ++n)
-    {
-        values[INDEX_Ci_START + (n - 1)] = ((1) * (std::pow(10, -(6))));
-    }
-
-    for (size_t n = 1; n <= MAX_CLUSTER_SIZE; ++n)
-    {
-        values[INDEX_Cv_START + (n - 1)] = ((1) * (std::pow(10, -(6))));
-    }
-    values[INDEX_Rho] = dislocation_density_0;
-}
-
 std::string get_state_csv_label() {
 	std::stringstream str; 
 	str << "t (seconds)";
@@ -345,26 +326,53 @@ std::string get_state_csv_label() {
 	}
 
 	str << ", Rho";
+	str << ", extra";
 	return str.str();
 }
 
-int system(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
+std::string get_csv_line(N_Vector state) {
+	std::stringstream str;
+	double* values = N_VGetArrayPointer(state);
+	for (size_t i = 0; i < STATE_SIZE; ++i) {
+		str << ", " << values[i];
+	}
+	str << ", " << b_i((3), values);
+	return str.str();
+}
+
+void get_initial_state(N_Vector state) {
+    double* values = N_VGetArrayPointer(state);
+
+    for (size_t n = 1; n <= MAX_CLUSTER_SIZE; ++n)
+    {
+        values[INDEX_Ci_START + (n - 1)] = ((1) * (std::pow(10, -(5))));
+    }
+
+    for (size_t n = 1; n <= MAX_CLUSTER_SIZE; ++n)
+    {
+        values[INDEX_Cv_START + (n - 1)] = ((1) * (std::pow(10, -(5))));
+    }
+    values[INDEX_Rho] = dislocation_density_0;
+}
+
+int derivative(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
     double* values = N_VGetArrayPointer(y);
     double* derivatives = N_VGetArrayPointer(ydot);
 
     for (size_t n = 1; n <= MAX_CLUSTER_SIZE; ++n)
     {
-        derivatives[INDEX_Ci_START + (n - 1)] = ((((Gv((n))) + (((((a_i((((n) + (1))), values)) * (-(b_i((n), values))))) * (values[INDEX_Ci_START + (n) - 1]))))) + (((c_i((((n) - (1))), values)) * (values[INDEX_Ci_START + (((n) - (1))) - 1]))));
+        derivatives[INDEX_Ci_START + (n - 1)] = ((((((Gv((n))) + (((a_i((((n) + (1))), values)) * (values[INDEX_Ci_START + (((n) + (1))) - 1]))))) - (((b_i((n), values)) * (values[INDEX_Ci_START + (n) - 1]))))) + (((c_i((((n) - (1))), values)) * (values[INDEX_Ci_START + (((n) - (1))) - 1]))));
     }
 
     for (size_t n = 1; n <= MAX_CLUSTER_SIZE; ++n)
     {
-        derivatives[INDEX_Cv_START + (n - 1)] = ((((Gv((n))) + (((((a_v((((n) + (1))), values)) * (-(b_v((n), values))))) * (values[INDEX_Cv_START + (n) - 1]))))) + (((c_v((((n) - (1))), values)) * (values[INDEX_Cv_START + (((n) - (1))) - 1]))));
+        derivatives[INDEX_Cv_START + (n - 1)] = ((((((Gv((n))) + (((a_v((((n) + (1))), values)) * (values[INDEX_Cv_START + (((n) + (1))) - 1]))))) - (((b_v((n), values)) * (values[INDEX_Cv_START + (n) - 1]))))) + (((c_v((((n) - (1))), values)) * (values[INDEX_Cv_START + (((n) - (1))) - 1]))));
     }
     derivatives[INDEX_Rho] = 0;
 
-    derivatives[INDEX_Ci_START + (size_t)(1 - 1)] = ((((((((Gi((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (-(i1_d_abs(values))))))) - (i1_gb_abs(values)))) - (i1_cluster_abs(values)))) + (i1_em(values)));
-    derivatives[INDEX_Cv_START + (size_t)(1 - 1)] = ((((((((Gv((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (-(v1_d_abs(values))))))) - (v1_gb_abs(values)))) - (v1_cluster_abs(values)))) + (v1_em(values)));
+    derivatives[INDEX_Ci_START + (size_t)(1 - 1)] = ((((((((((Gi((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (values[INDEX_Cv_START + (1) - 1]))))) - (i1_d_abs(values)))) - (i1_gb_abs(values)))) - (i1_cluster_abs(values)))) + (i1_em(values)));
+    derivatives[INDEX_Cv_START + (size_t)(1 - 1)] = ((((((((((Gv((1))) - (((((Riv) * (values[INDEX_Ci_START + (1) - 1]))) * (values[INDEX_Cv_START + (1) - 1]))))) - (v1_d_abs(values)))) - (v1_gb_abs(values)))) - (v1_cluster_abs(values)))) + (v1_em(values)));
+    derivatives[INDEX_Ci_START + (size_t)(2 - 1)] = 0;
     derivatives[INDEX_Ci_START + (size_t)(MAX_CLUSTER_SIZE - 1)] = 0;
     derivatives[INDEX_Cv_START + (size_t)(MAX_CLUSTER_SIZE - 1)] = 0;
     return 0;
