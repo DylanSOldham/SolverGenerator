@@ -34,7 +34,7 @@ int main()
     handleError( CVodeInit(cvodes_memory_block, derivative, 0, state) );
     handleError( CVodeSStolerances(cvodes_memory_block, 1e-6, 1e9) );
     linear_solver = SUNLinSol_SPGMR(state, SUN_PREC_NONE, 0, sun_context);
-    CVodeSetMaxNumSteps(cvodes_memory_block, 50000);
+    CVodeSetMaxNumSteps(cvodes_memory_block, 500);
     CVodeSetMinStep(cvodes_memory_block, 1e-30);
     CVodeSetMaxStep(cvodes_memory_block, 1e5);
     CVodeSetInitStep(cvodes_memory_block, 1e-10);

@@ -276,3 +276,6 @@ public:
         return "";
     }
 };
+
+std::string generate_parameter_value(SystemDeclarations& system, Parameter& parameter);
+std::string generate_parameters_index(SystemDeclarations& system, std::vector<Parameter>& parameters);

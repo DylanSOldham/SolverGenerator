@@ -11,61 +11,98 @@
 
 std::string generate_index_range(SystemDeclarations &system, Symbol state_symbol)
 {
-    for (auto p : state_symbol.parameters) // Skip constrained definitions - only the catchall needs indices
+    for (auto p : state_symbol.parameters)
     {
-        if (p.type != ParameterType::VARIABLE)
+        if (p.type != ParameterType::VARIABLE) // Skip constrained definitions - only the catchall needs indices
         {
+            return "";
+        }
+
+        auto &range_symbol = p.symbol.value();
+        if (!system.ranges.count(range_symbol))
+        {
+            std::cerr << "Error: Tried to generate indices for a list " << range_symbol << " which doesn't exist.\n";
             return "";
         }
     }
 
-    auto &range_symbol = state_symbol.parameters[0].symbol.value();
-    if (!system.ranges.count(range_symbol))
-    {
-        std::cerr << "Error: Tried to generate indices for a list " << range_symbol << " which doesn't exist.\n";
-        return "";
-    }
-
     std::stringstream str;
 
-    auto range = system.ranges[range_symbol];
+    std::string size_str = "";
+    for (size_t i = 0; i < state_symbol.parameters.size(); ++i)
+    {
+        auto range = system.ranges[state_symbol.parameters[i].symbol.value()];
+
+        if (i != 0) size_str += " * ";
+        size_str += "(" + range.end->generate(system) + " - " + range.start->generate(system) + " + 1)";
+    }
     str << "\nconst size_t INDEX_" << state_symbol.to_string() << "_START = " << system.next_index << ";";
-    str << "\nconst size_t INDEX_" << state_symbol.to_string() << "_SIZE = " << range.end->generate(system) << " - " << range.start->generate(system) << " + 1;";
+    str << "\nconst size_t INDEX_" << state_symbol.to_string() << "_SIZE = " << size_str << ";";
     system.next_index = "INDEX_" + state_symbol.to_string() + "_START + INDEX_" + state_symbol.to_string() + "_SIZE";
 
     return str.str();
 }
 
+void add_tabs(std::stringstream& str, size_t num_tabs)
+{
+    for (size_t i = 0; i < num_tabs; ++i)
+        str << "\t";
+}
+
 std::string generate_setter_list(SystemDeclarations &system, InitialState &initial_state)
 {
-    if (initial_state.symbol.parameters[0].type != ParameterType::VARIABLE)
+    for (auto p : initial_state.symbol.parameters)
     {
-        std::cerr << "Error: Trying to generate indices for a non variable list parameter." << std::endl;
-        return "";
-    }
+        if (p.type != ParameterType::VARIABLE)
+        {
+            std::cerr << "Error: Trying to generate indices for a non variable list parameter." << std::endl;
+            return "";
+        }
 
-    auto &range_symbol = initial_state.symbol.parameters[0].symbol.value();
-    if (!system.ranges.count(range_symbol))
-    {
-        std::cerr << "Error: Tried to generate setters for a list which doesn't exist.\n";
-        return "";
+        auto &range_symbol = p.symbol.value();
+        if (!system.ranges.count(range_symbol))
+        {
+            std::cerr << "Error: Tried to generate setters for a list which doesn't exist.\n";
+            return "";
+        }
     }
-
-    auto range = system.ranges[range_symbol];
-    system.bound_parameters.clear();
-    system.bound_parameters[range_symbol] = true;
 
     std::stringstream str;
+    std::string index_string;
 
-    str << "\n    for (size_t " << range_symbol << " = " << range.start->generate(system) << "; "
-        << range_symbol << " <= " << range.end->generate(system) << "; "
-        << "++" << range_symbol << ")\n"
-        << "    {\n"
+    str << "\n";
+    
+    system.bound_parameters.clear();
 
-        << "        values[INDEX_" << initial_state.symbol.to_string() << "_START + (" << range_symbol << " - 1)] = "
-        << initial_state.rhs->generate(system) << ";\n"
+    size_t nesting_level = 1;
+    for (size_t i = 0; i < initial_state.symbol.parameters.size(); ++i)
+    {
+        auto p = initial_state.symbol.parameters[i];
+        auto range_symbol = p.symbol.value();
+        auto range = system.ranges[range_symbol];
+        system.bound_parameters[range_symbol] = true;
 
-        << "    }\n";
+        add_tabs(str, nesting_level);
+        str << "for (size_t " << range_symbol << " = " << range.start->generate(system) << "; "
+            << range_symbol << " <= " << range.end->generate(system) << "; "
+            << "++" << range_symbol << ")\n";
+        add_tabs(str, nesting_level);
+        str << "{\n";
+
+        nesting_level += 1;
+    }
+
+    add_tabs(str, nesting_level);
+    str << "values[INDEX_" << initial_state.symbol.to_string() << "_START + " 
+        << generate_parameters_index(system, initial_state.symbol.parameters) << "] = "
+        << initial_state.rhs->generate(system) << ";\n";
+    nesting_level -= 1;
+
+    for (; nesting_level > 0; --nesting_level)
+    {
+        add_tabs(str, nesting_level);
+        str << "}\n";
+    }
 
     return str.str();
 }
@@ -78,64 +115,109 @@ std::string generate_derivative_list(SystemDeclarations &system, StateVariable &
         {
             return "";
         }
-    }
     
-    if (state_variable.symbol.parameters[0].type != ParameterType::VARIABLE)
-    {
-        std::cerr << "Warning: Trying to generate indices for a non variable list parameter." << std::endl;
-        return "";
-    }
+        if (p.type != ParameterType::VARIABLE)
+        {
+            std::cerr << "Warning: Trying to generate indices for a non variable list parameter." << std::endl;
+            return "";
+        }
 
-    auto &range_symbol = state_variable.symbol.parameters[0].symbol.value();
-    if (!system.ranges.count(range_symbol))
-    {
-        std::cerr << "Error: Tried to generate derivatives for a list which doesn't exist.\n";
-        return "";
+        auto &range_symbol = p.symbol.value();
+        if (!system.ranges.count(range_symbol))
+        {
+            std::cerr << "Error: Tried to generate derivatives for a list which doesn't exist.\n";
+            return "";
+        }
     }
-
-    auto range = system.ranges[range_symbol];
-    system.bound_parameters.clear();
-    system.bound_parameters[range_symbol] = true;
 
     std::stringstream str;
+    std::string index_string;
 
-    str << "\n    for (size_t " << range_symbol << " = " << range.start->generate(system) << "; "
-        << range_symbol << " <= " << range.end->generate(system) << "; "
-        << "++" << range_symbol << ")\n"
-        << "    {\n"
+    str << "\n";
 
-        << "        derivatives[INDEX_" << state_variable.symbol.to_string() << "_START + (" << range_symbol << " - 1)] = "
-        << state_variable.rhs->generate(system) << ";\n"
+    system.bound_parameters.clear();
 
-        << "    }\n";
+    size_t nesting_level = 1;
+    for (size_t i = 0; i < state_variable.symbol.parameters.size(); ++i)
+    {
+        auto p = state_variable.symbol.parameters[i];
+        auto range_symbol = p.symbol.value();
+        auto range = system.ranges[range_symbol];
+        system.bound_parameters[range_symbol] = true;
+
+        add_tabs(str, nesting_level);
+        str << "for (size_t " << range_symbol << " = " << range.start->generate(system) << "; "
+            << range_symbol << " <= " << range.end->generate(system) << "; "
+            << "++" << range_symbol << ")\n";
+        add_tabs(str, nesting_level);
+        str << "{\n";
+
+        nesting_level += 1;
+    }
+
+    add_tabs(str, nesting_level);
+    str << "derivatives[INDEX_" << state_variable.symbol.to_string() << "_START + " 
+        << generate_parameters_index(system, state_variable.symbol.parameters) << "] = "
+        << state_variable.rhs->generate(system) << ";\n";
+    nesting_level -= 1;
+
+    for (; nesting_level > 0; --nesting_level)
+    {
+        add_tabs(str, nesting_level);
+        str << "}\n";
+    }
 
     return str.str();
 }
 
 std::string generate_csv_list(SystemDeclarations &system, Symbol state_symbol)
 {
+    std::stringstream str;
+    size_t nesting_level = 1;
     for (auto p : state_symbol.parameters) // Skip constrained definitions - catchall provides all labels
     {
         if (p.type != ParameterType::VARIABLE)
         {
             return "";
         }
+
+        auto &range_symbol = p.symbol.value();
+        if (!system.ranges.count(range_symbol))
+        {
+            std::cerr << "Error: Tried to generate csv labels for a list which doesn't exist.\n";
+            return "";
+        }
+
+        auto range = system.ranges[range_symbol];
+        str << "\n";
+        add_tabs(str, nesting_level);
+        str << "for (size_t " << range_symbol << " = " << range.start->generate(system) << "; "
+            << range_symbol << " <= " << range.end->generate(system)  << "; ++" << range_symbol << ")";
+        str << "\n";
+        add_tabs(str, nesting_level);
+        str << "{";
+
+        nesting_level += 1;
     }
 
-    auto &range_symbol = state_symbol.parameters[0].symbol.value();
-    if (!system.ranges.count(range_symbol))
+    str << "\n";
+    add_tabs(str, nesting_level);
+    str << "str << \", " << state_symbol.to_string() << "[\"";
+    for (size_t i = 0; i < state_symbol.parameters.size(); ++i)
     {
-        std::cerr << "Error: Tried to generate csv labels for a list which doesn't exist.\n";
-        return "";
+        auto p = state_symbol.parameters[i];
+        if (i != 0) str << " << \" \"";
+        str << " << " << p.symbol.value();
     }
+    str << " << \"]\";";
+    nesting_level -= 1;
 
-    std::stringstream str;
-
-    auto range = system.ranges[range_symbol];
-    str << "\n\tfor (size_t i = " << range.start->generate(system) << "; i <= " << range.end->generate(system)  << "; ++i)";
-    str << "\n\t{";
-    str << "\n\t\tstr << \", " << state_symbol.to_string() << "[\" << i << \"]\";";
-    str << "\n\t}\n";
+    for (; nesting_level > 0; --nesting_level)
+    {
+        str << "\n";
+        add_tabs(str, nesting_level);
+        str << "}";
+    }
 
     return str.str();
 }

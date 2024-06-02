@@ -72,6 +72,33 @@ std::string generate_parameter_value(SystemDeclarations& system, Parameter& para
     return str.str();
 }
 
+std::string generate_parameters_index(SystemDeclarations& system, std::vector<Parameter>& parameters)
+{
+    std::stringstream index_str;
+
+    std::string index_jump = "";
+    for (int i = 0; i < parameters.size(); ++i)
+    {
+        auto range_symbol = parameters[i].symbol.value();
+        auto range = system.ranges[range_symbol];
+
+        if (i != 0) 
+        {
+            index_str << " + " << index_jump << " * (";
+        }
+        
+        index_str << "("  << generate_parameter_value(system, parameters[i]) << " - 1)";
+
+        if (i != 0) index_str << ")";
+
+        std::string range_size = "(" + range.end->generate(system) + " - " + range.start->generate(system) + " + 1)";
+        if (i != 0) index_jump += range_size;
+        index_jump += range_size;
+    }
+
+    return index_str.str();
+}
+
 std::string SymbolExpression::generate(SystemDeclarations& system)
 {
     std::stringstream str;
@@ -81,8 +108,7 @@ std::string SymbolExpression::generate(SystemDeclarations& system)
     {
         case SymbolType::STATE:
             if (symbol.parameters.size() > 0) {
-                auto& parameter = symbol.parameters[0];
-                str << "values[INDEX_" << symbol.to_string() << "_START + " << generate_parameter_value(system, parameter) << " - 1]";
+                str << "values[INDEX_" << symbol.to_string() << "_START + " << generate_parameters_index(system, symbol.parameters) << "]";
                 return str.str();
             }
 
