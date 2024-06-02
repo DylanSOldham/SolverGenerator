@@ -15,6 +15,8 @@ std::string generate_index_range(SystemDeclarations &system, Symbol state_symbol
 std::string generate_csv_getters(SystemDeclarations &system);
 std::string generate_csv_list(SystemDeclarations &system, Symbol state_symbol);
 
+std::string generate_meta(SystemDeclarations& system);
+
 std::string generate_constant_definitions(SystemDeclarations &system);
 std::string generate_function_declarations(SystemDeclarations &system);
 std::string generate_function_definitions(SystemDeclarations &system);

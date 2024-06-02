@@ -31,7 +31,7 @@ std::string get_token_type_string(TokenType type)
         case TokenType::SUM: return "SUM";
         case TokenType::ASSIGN: return "ASSIGN";
         case TokenType::COMMA: return "COMMA";
-        case TokenType::TAG: return "TAG";
+        case TokenType::TAG_CUDA: return "TAG_CUDA";
         default: return "UNKNOWN";
     }
 }
@@ -74,6 +74,59 @@ std::vector<Token> tokenize(std::string line)
         
         if (std::regex_search(line, matches, std::regex("^#"))) {
             break;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@CUDA"))) {
+            tokens.push_back(Token { TokenType::TAG_CUDA });
+            break;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@END_TIME"))) {
+            tokens.push_back(Token { TokenType::TAG_END_TIME });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@SAMPLE_INTERVAL"))) {
+            tokens.push_back(Token { TokenType::TAG_SAMPLE_INTERVAL });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@MAXIMUM_STEP_SIZE"))) {
+            tokens.push_back(Token { TokenType::TAG_MAX_STEP_SIZE });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@MINIMUM_STEP_SIZE"))) {
+            tokens.push_back(Token { TokenType::TAG_MIN_STEP_SIZE });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@MAXIMUM_NUM_STEPS"))) {
+            tokens.push_back(Token { TokenType::TAG_MAX_NUM_STEPS });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@INITIAL_STEP_SIZE"))) {
+            tokens.push_back(Token { TokenType::TAG_INIT_STEP });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@RELATIVE_TOLERANCE"))) {
+            tokens.push_back(Token { TokenType::TAG_RELTOL });
+            line = line.substr(matches[0].str().size());
+            continue;
+        }
+        
+        if (std::regex_search(line, matches, std::regex("^@ABSOLUTE_TOLERANCE"))) {
+            tokens.push_back(Token { TokenType::TAG_ABSTOL });
+            line = line.substr(matches[0].str().size());
+            continue;
         }
         
         if (std::regex_search(line, matches, std::regex("^d/dt"))) {

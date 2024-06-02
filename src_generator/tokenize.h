@@ -95,7 +95,15 @@ enum class TokenType {
     SUM,
     ASSIGN,
     COMMA,
-    TAG
+    TAG_END_TIME,
+    TAG_SAMPLE_INTERVAL,
+    TAG_MAX_NUM_STEPS,
+    TAG_MAX_STEP_SIZE,
+    TAG_MIN_STEP_SIZE,
+    TAG_INIT_STEP,
+    TAG_RELTOL,
+    TAG_ABSTOL,
+    TAG_CUDA
 };
 
 std::string get_token_type_string(TokenType type);

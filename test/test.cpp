@@ -1,4 +1,5 @@
 #include <string>
+#include <cmath>
 
 #include <gtest/gtest.h>
 
@@ -382,15 +383,23 @@ TEST(Parse, IndexedExpression2)
     EXPECT_TRUE(indices[0].symbol.has_value());
 }
 
+TEST(Parse, TagEndTime)
+{
+    SystemDeclarations system;
+    parse_declaration(system, "@END_TIME 10^-8");
+
+    EXPECT_EQ(system.end_time, "std::pow(10, -(8))");
+}
+
 TEST(Generate, StateDefinition)
 {
     std::vector<Token> tokens = tokenize("d/dt C[n] = 1.0 - C[n]");
 
     SystemDeclarations system;
-    system.ranges["n"] = Range();
+    system.ranges["n"] = Range(std::make_shared<ConstantExpression>(1), std::make_shared<ConstantExpression>(5));
     parse_state_definition(system, tokens);
     system.bound_parameters["n"] = true;
     
     EXPECT_TRUE(system.state_variables.size() == 1);
-    ASSERT_EQ(system.state_variables[0].rhs->generate(system), "((1) - (values[INDEX_C_START + (n) - 1]))");
+    ASSERT_EQ(system.state_variables[0].rhs->generate(system), "((1) - (values[INDEX_C_START + ((n) - 1)]))");
 }

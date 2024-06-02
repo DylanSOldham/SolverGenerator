@@ -417,6 +417,18 @@ void parse_output_value(SystemDeclarations &system, std::vector<Token> tokens)
     system.additional_outputs.push_back(ExpressionOutput{symbol, expression});
 }
 
+void parse_valued_tag(std::string& tag_lvalue, SystemDeclarations system, std::vector<Token> tokens)
+{
+    Token tag_token = tokens.front();
+    tokens.erase(tokens.begin());
+    auto expr = parse_expression(system, tokens);
+    if (!expr)
+    {
+        std::cerr << "Error: Failed to parse " << tag_token.to_string() << " tag.\n";
+    }
+    tag_lvalue = expr->generate(system);
+}
+
 void parse_declaration(SystemDeclarations &system, std::string line)
 {
     std::vector<Token> tokens = tokenize(line);
@@ -437,6 +449,30 @@ void parse_declaration(SystemDeclarations &system, std::string line)
         break;
     case TokenType::OUTPUT:
         parse_output_value(system, tokens);
+        break;
+    case TokenType::TAG_END_TIME:
+        parse_valued_tag(system.end_time, system, tokens);
+        break;
+    case TokenType::TAG_SAMPLE_INTERVAL:
+        parse_valued_tag(system.sample_interval, system, tokens);
+        break;
+    case TokenType::TAG_RELTOL:
+        parse_valued_tag(system.reltol, system, tokens);
+        break;
+    case TokenType::TAG_ABSTOL:
+        parse_valued_tag(system.abstol, system, tokens);
+        break;
+    case TokenType::TAG_MAX_NUM_STEPS:
+        parse_valued_tag(system.max_num_steps, system, tokens);
+        break;
+    case TokenType::TAG_MAX_STEP_SIZE:
+        parse_valued_tag(system.max_step_size, system, tokens);
+        break;
+    case TokenType::TAG_MIN_STEP_SIZE:
+        parse_valued_tag(system.min_step_size, system, tokens);
+        break;
+    case TokenType::TAG_CUDA:
+        system.use_cuda = true;
         break;
     }
 }

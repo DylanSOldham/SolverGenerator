@@ -53,6 +53,16 @@ struct SystemDeclarations
 
     std::string next_index = "0";
 
+    bool use_cuda = false;
+    std::string end_time = "1e2";
+    std::string sample_interval = "1e1";
+    std::string reltol = "1e-6";
+    std::string abstol = "1.0";
+    std::string max_num_steps = "500";
+    std::string max_step_size = "1e5";
+    std::string min_step_size = "1e-30";
+    std::string init_step_size = "1e-10";
+
     SymbolType resolve_symbol_type(Symbol symbol) {
         if (bound_parameters.count(symbol.name)) return SymbolType::PARAMETER;
 

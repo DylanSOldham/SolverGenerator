@@ -72,24 +72,48 @@ std::string generate_parameter_value(SystemDeclarations& system, Parameter& para
     return str.str();
 }
 
-std::string generate_parameters_index(SystemDeclarations& system, std::vector<Parameter>& parameters)
+std::vector<Parameter> get_needed_parameter_list(SystemDeclarations& system, Symbol& symbol)
+{
+    for (auto d : system.state_variables)
+    {
+        if (d.symbol != symbol) continue;
+
+        for (auto p : d.symbol.parameters)
+        {
+            if (p.type != ParameterType::VARIABLE) continue;
+        }
+
+        return d.symbol.parameters;
+    }
+
+    std::cerr << "Failed to find catchall definition for " << symbol.to_string() << "\n";
+    return {};
+}
+
+std::string generate_parameters_index(SystemDeclarations& system, Symbol& symbol)
 {
     std::stringstream index_str;
 
-    std::string index_jump = "";
-    for (int i = 0; i < parameters.size(); ++i)
-    {
-        auto range_symbol = parameters[i].symbol.value();
-        auto range = system.ranges[range_symbol];
+    auto original_parameters = get_needed_parameter_list(system, symbol);
 
+    if (symbol.parameters.size() != original_parameters.size())
+    {
+        std::cerr << "Error: Used wrong number of indices for accessing " << symbol.to_string() << "\n";
+        return "0";
+    }
+
+    std::string index_jump = "";
+    for (int i = 0; i < symbol.parameters.size(); ++i)
+    {
         if (i != 0) 
         {
             index_str << " + " << index_jump << " * (";
         }
-        
-        index_str << "("  << generate_parameter_value(system, parameters[i]) << " - 1)";
-
+        index_str << "("  << generate_parameter_value(system, symbol.parameters[i]) << " - 1)";
         if (i != 0) index_str << ")";
+
+        auto range_symbol = original_parameters[i].symbol.value();
+        auto range = system.ranges[range_symbol];
 
         std::string range_size = "(" + range.end->generate(system) + " - " + range.start->generate(system) + " + 1)";
         if (i != 0) index_jump += range_size;
@@ -108,7 +132,7 @@ std::string SymbolExpression::generate(SystemDeclarations& system)
     {
         case SymbolType::STATE:
             if (symbol.parameters.size() > 0) {
-                str << "values[INDEX_" << symbol.to_string() << "_START + " << generate_parameters_index(system, symbol.parameters) << "]";
+                str << "values[INDEX_" << symbol.to_string() << "_START + " << generate_parameters_index(system, symbol) << "]";
                 return str.str();
             }
 

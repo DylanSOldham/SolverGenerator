@@ -32,20 +32,17 @@ int main()
     
     cvodes_memory_block = CVodeCreate(CV_BDF, sun_context);
     handleError( CVodeInit(cvodes_memory_block, derivative, 0, state) );
-    handleError( CVodeSStolerances(cvodes_memory_block, 1e-6, 1e9) );
+    handleError( CVodeSStolerances(cvodes_memory_block, absolute_tolerance, relative_tolerance) );
     linear_solver = SUNLinSol_SPGMR(state, SUN_PREC_NONE, 0, sun_context);
-    CVodeSetMaxNumSteps(cvodes_memory_block, 500);
-    CVodeSetMinStep(cvodes_memory_block, 1e-30);
-    CVodeSetMaxStep(cvodes_memory_block, 1e5);
-    CVodeSetInitStep(cvodes_memory_block, 1e-10);
+    CVodeSetMaxNumSteps(cvodes_memory_block, maximum_num_steps);
+    CVodeSetMinStep(cvodes_memory_block, minimum_step_size);
+    CVodeSetMaxStep(cvodes_memory_block, maximum_step_size);
+    CVodeSetInitStep(cvodes_memory_block, initial_step_size);
     handleError( CVodeSetLinearSolver(cvodes_memory_block, linear_solver, NULL) );
     handleError( CVodeSetPreconditioner(cvodes_memory_block, NULL, p_solve) );
 
-    double tout = 1e8;
-    double sample_interval = 1e6;
-
     std::cout << get_state_csv_label() << std::endl;
-    for (double t = 0; t <= tout;)
+    for (double t = 0; t <= end_time;)
     {
         int sunerr = CVode(cvodes_memory_block, t + sample_interval, state, &t, CV_NORMAL);
         if (sunerr) break;

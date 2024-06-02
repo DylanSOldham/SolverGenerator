@@ -13,6 +13,7 @@ int main(int argc, char **argv)
     outmodule << "#include <cmath>"
               << "\n#include <nvector/nvector_serial.h>"
               << "\n#include <sstream>"
+              << generate_meta(system)
               << generate_constant_definitions(system) 
               << generate_state_indices(system)
               << "\nconst size_t STATE_SIZE =" << system.next_index << ";"

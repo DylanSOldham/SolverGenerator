@@ -2,19 +2,35 @@
 #include <nvector/nvector_serial.h>
 #include <sstream>
 
+const double end_time = std::pow(10, 1);
+const double sample_interval = 1;
+const double absolute_tolerance = std::pow(10, 10);
+const double relative_tolerance = std::pow(10, -(6));
+const size_t initial_step_size = 1e-10;
+const double maximum_step_size = std::pow(10, 5);
+const double minimum_step_size = std::pow(10, -(30));
+const double maximum_num_steps = 500;
+
+
 const size_t INDEX_C_START = 0;
-const size_t INDEX_C_SIZE = (3 - 1 + 1) * (3 - 1 + 1);
+const size_t INDEX_C_SIZE = (3 - 1 + 1);
 const size_t STATE_SIZE =INDEX_C_START + INDEX_C_SIZE;
+
+
+double __summation_0(double* values) {
+	double sum = 0.0;
+	for (size_t i = 1; i < 3; i++) {
+		sum += values[INDEX_C_START + ((i) - 1)];
+	}
+	return sum;
+}
 
 std::string get_state_csv_label() {
 	std::stringstream str; 
 	str << "t (seconds)";
 	for (size_t n = 1; n <= 3; ++n)
 	{
-		for (size_t x = 1; x <= 3; ++x)
-		{
-			str << ", C[" << n << " " << x << "]";
-		}
+		str << ", C[" << n << "]";
 	}
 	return str.str();
 }
@@ -33,10 +49,7 @@ void get_initial_state(N_Vector state) {
 
 	for (size_t n = 1; n <= 3; ++n)
 	{
-		for (size_t x = 1; x <= 3; ++x)
-		{
-			values[INDEX_C_START + ((n) - 1) + (3 - 1 + 1) * (((x) - 1))] = ((x) - (((0.05) * (n))));
-		}
+		values[INDEX_C_START + ((n) - 1)] = n;
 	}
 }
 
@@ -46,10 +59,7 @@ int derivative(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
 
 	for (size_t n = 1; n <= 3; ++n)
 	{
-		for (size_t x = 1; x <= 3; ++x)
-		{
-			derivatives[INDEX_C_START + ((n) - 1) + (3 - 1 + 1) * (((x) - 1))] = 0;
-		}
+		derivatives[INDEX_C_START + ((n) - 1)] = __summation_0(values);
 	}
 
     return 0;

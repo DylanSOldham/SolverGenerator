@@ -94,7 +94,7 @@ std::string generate_setter_list(SystemDeclarations &system, InitialState &initi
 
     add_tabs(str, nesting_level);
     str << "values[INDEX_" << initial_state.symbol.to_string() << "_START + " 
-        << generate_parameters_index(system, initial_state.symbol.parameters) << "] = "
+        << generate_parameters_index(system, initial_state.symbol) << "] = "
         << initial_state.rhs->generate(system) << ";\n";
     nesting_level -= 1;
 
@@ -157,7 +157,7 @@ std::string generate_derivative_list(SystemDeclarations &system, StateVariable &
 
     add_tabs(str, nesting_level);
     str << "derivatives[INDEX_" << state_variable.symbol.to_string() << "_START + " 
-        << generate_parameters_index(system, state_variable.symbol.parameters) << "] = "
+        << generate_parameters_index(system, state_variable.symbol) << "] = "
         << state_variable.rhs->generate(system) << ";\n";
     nesting_level -= 1;
 
@@ -222,9 +222,27 @@ std::string generate_csv_list(SystemDeclarations &system, Symbol state_symbol)
     return str.str();
 }
 
+std::string generate_meta(SystemDeclarations& system)
+{
+    std::stringstream str;
+
+    str << "\n\nconst double end_time = " << system.end_time << ";";
+    str << "\nconst double sample_interval = " << system.sample_interval << ";";
+    str << "\nconst double absolute_tolerance = " << system.abstol << ";";
+    str << "\nconst double relative_tolerance = " << system.reltol << ";";
+    str << "\nconst size_t initial_step_size = " << system.init_step_size << ";";
+    str << "\nconst double maximum_step_size = " << system.max_step_size << ";";
+    str << "\nconst double minimum_step_size = " << system.min_step_size << ";";
+    str << "\nconst double maximum_num_steps = " << system.max_num_steps << ";";
+
+    return str.str();
+}
+
 std::string generate_constant_definitions(SystemDeclarations &system)
 {
     std::stringstream str;
+
+    str << "\n";
 
     for (auto &f : system.function_definitions)
     {
@@ -246,6 +264,8 @@ std::string generate_constant_definitions(SystemDeclarations &system)
 std::string generate_function_declarations(SystemDeclarations &system)
 {
     std::stringstream str;
+
+    str << "\n";
 
     auto &functions = system.function_definitions;
 
@@ -373,7 +393,7 @@ std::string generate_summation_definitions(SystemDeclarations& system)
             << summation.index.to_string() << "++) {"
             << "\n\t\tsum += " << summation.summand->generate(system) << ";"
             << "\n\t}"
-            << "\n\t return sum;"
+            << "\n\treturn sum;"
             << "\n}";
         system.bound_parameters.erase(summation.index.name);
     }
