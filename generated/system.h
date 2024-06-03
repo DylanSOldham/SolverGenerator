@@ -13,7 +13,7 @@ const double maximum_num_steps = 5000;
 const bool use_direct_solver = 1;
 
 double PI = 3.14159;
-double BOLTZMAN_CONSTANT = ((8.6173) * (std::pow(10, -(5))));
+double BOLTZMANN_CONSTANT = ((8.6173) * (std::pow(10, -(5))));
 double MAX_CLUSTER_SIZE = 1000;
 double flux = ((2.9) * (std::pow(10, -(7))));
 double temperature = ((330) + (273.15));
@@ -45,8 +45,8 @@ double grain_size = ((4) * (std::pow(10, -(3))));
 double lattice_param = ((3.6) * (std::pow(10, -(8))));
 double burgers_vector = ((lattice_param) / (std::sqrt(2)));
 double atomic_volume = ((std::pow(lattice_param, 3)) / (4));
-double i_diffusion = ((i_diffusion_0) * (std::exp(-(((i_migration) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
-double v_diffusion = ((v_diffusion_0) * (std::exp(-(((v_migration) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
+double i_diffusion = ((i_diffusion_0) * (std::exp(-(((i_migration) / (((BOLTZMANN_CONSTANT) * (temperature))))))));
+double v_diffusion = ((v_diffusion_0) * (std::exp(-(((v_migration) / (((BOLTZMANN_CONSTANT) * (temperature))))))));
 double Riv = ((((((4) * (PI))) * (((i_diffusion) + (v_diffusion))))) * (recombination_radius));
 double dislocation_gain = 0;
 
@@ -271,12 +271,12 @@ double v1_gb_abs(double* values)
 
 double alpha_ii(double n)
 {
-	return ((((((((((2) * (PI))) * (r((n))))) * (i_bias_factor((n))))) * (((i_diffusion) / (atomic_volume))))) * (std::exp(-(((i_binding_energy((n))) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
+	return ((((((((((2) * (PI))) * (r((n))))) * (i_bias_factor((n))))) * (((i_diffusion) / (atomic_volume))))) * (std::exp(-(((i_binding_energy((n))) / (((BOLTZMANN_CONSTANT) * (temperature))))))));
 }
 
 double alpha_vv(double n)
 {
-	return ((((((((((2) * (PI))) * (r((n))))) * (v_bias_factor((n))))) * (((v_diffusion) / (atomic_volume))))) * (std::exp(-(((v_binding_energy((n))) / (((BOLTZMAN_CONSTANT) * (temperature))))))));
+	return ((((((((((2) * (PI))) * (r((n))))) * (v_bias_factor((n))))) * (((v_diffusion) / (atomic_volume))))) * (std::exp(-(((v_binding_energy((n))) / (((BOLTZMANN_CONSTANT) * (temperature))))))));
 }
 
 double beta_ii(double n)

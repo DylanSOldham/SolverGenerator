@@ -5,6 +5,7 @@
 #include <vector>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <memory>
 
 #include "expression.h"
