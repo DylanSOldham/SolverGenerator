@@ -13,22 +13,14 @@ const double maximum_num_steps = 500;
 
 
 const size_t INDEX_C_START = 0;
-const size_t INDEX_C_SIZE = (3 - 1 + 1);
+const size_t INDEX_C_SIZE = (5 - 1 + 1);
 const size_t STATE_SIZE =INDEX_C_START + INDEX_C_SIZE;
 
-
-double __summation_0(double* values) {
-	double sum = 0.0;
-	for (size_t i = 1; i < 3; i++) {
-		sum += values[INDEX_C_START + ((i) - 1)];
-	}
-	return sum;
-}
 
 std::string get_state_csv_label() {
 	std::stringstream str; 
 	str << "t (seconds)";
-	for (size_t n = 1; n <= 3; ++n)
+	for (size_t n = 1; n <= 5; ++n)
 	{
 		str << ", C[" << n << "]";
 	}
@@ -47,7 +39,7 @@ std::string get_csv_line(N_Vector state) {
 void get_initial_state(N_Vector state) {
     double* values = N_VGetArrayPointer(state);
 
-	for (size_t n = 1; n <= 3; ++n)
+	for (size_t n = 1; n <= 5; ++n)
 	{
 		values[INDEX_C_START + ((n) - 1)] = n;
 	}
@@ -57,9 +49,9 @@ int derivative(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
     double* values = N_VGetArrayPointer(y);
     double* derivatives = N_VGetArrayPointer(ydot);
 
-	for (size_t n = 1; n <= 3; ++n)
+	for (size_t n = 1; n <= 5; ++n)
 	{
-		derivatives[INDEX_C_START + ((n) - 1)] = __summation_0(values);
+		derivatives[INDEX_C_START + ((n) - 1)] = ((((std::pow(n, 2)) - (std::pow(n, 24)))) + (100));
 	}
 
     return 0;

@@ -9,7 +9,7 @@
 @RELATIVE_TOLERANCE 10^-6
 @ABSOLUTE_TOLERANCE 10^10
 
-n = 1 .. 3
+n = 1 .. 5
 
-d/dt C[n] = SUM(i = 1 .. 3, C[i])
+d/dt C[n] = n ^ 2 - n^24 + 100.0
 INITIAL C[n] = n
