@@ -30,6 +30,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/.build/lib)
 FetchContent_MakeAvailable(SUNDIALS)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${HOLDER})
 
+set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_SOURCE_DIR}/mingw64/bin/g++.exe")
 add_executable(generator ./src_generator/main.cpp ./src_generator/generator.cpp ./src_generator/expression.cpp ./src_generator/parse.cpp ./src_generator/tokenize.cpp)
 
 add_executable(solver ./src_solver/main.cpp)
