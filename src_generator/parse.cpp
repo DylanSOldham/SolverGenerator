@@ -474,6 +474,9 @@ void parse_declaration(SystemDeclarations &system, std::string line)
     case TokenType::TAG_CUDA:
         system.use_cuda = true;
         break;
+    case TokenType::TAG_DIRECT_SOLVER:
+        system.use_direct_solver = true;
+        break;
     }
 }
 

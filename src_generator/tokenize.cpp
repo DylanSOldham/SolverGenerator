@@ -76,6 +76,11 @@ std::vector<Token> tokenize(std::string line)
             break;
         }
         
+        if (std::regex_search(line, matches, std::regex("^@DIRECT_LINEAR_SOLVER"))) {
+            tokens.push_back(Token { TokenType::TAG_DIRECT_SOLVER });
+            break;
+        }
+        
         if (std::regex_search(line, matches, std::regex("^@CUDA"))) {
             tokens.push_back(Token { TokenType::TAG_CUDA });
             break;

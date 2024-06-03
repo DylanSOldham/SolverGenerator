@@ -2,6 +2,7 @@
 
 #include <cvodes/cvodes.h>
 #include <nvector/nvector_serial.h>
+#include <sunlinsol/sunlinsol_dense.h>
 #include <sunlinsol/sunlinsol_spgmr.h>
 #include <sunmatrix/sunmatrix_dense.h> 
 
@@ -21,6 +22,7 @@ int main()
 {
     SUNContext sun_context;
     N_Vector state;
+    SUNMatrix A;
     SUNLinearSolver linear_solver;
     void* cvodes_memory_block;
     size_t state_size = STATE_SIZE;
@@ -32,14 +34,23 @@ int main()
     
     cvodes_memory_block = CVodeCreate(CV_BDF, sun_context);
     handleError( CVodeInit(cvodes_memory_block, derivative, 0, state) );
-    handleError( CVodeSStolerances(cvodes_memory_block, absolute_tolerance, relative_tolerance) );
-    linear_solver = SUNLinSol_SPGMR(state, SUN_PREC_NONE, 0, sun_context);
+    handleError( CVodeSStolerances(cvodes_memory_block, relative_tolerance, absolute_tolerance) );
+    if (use_direct_solver)
+    {
+        A = SUNDenseMatrix(state_size, state_size, sun_context);
+        linear_solver = SUNLinSol_Dense(state, A, sun_context);
+    }
+    else
+    {
+        linear_solver = SUNLinSol_SPGMR(state, SUN_PREC_NONE, 0, sun_context);
+    }
     CVodeSetMaxNumSteps(cvodes_memory_block, maximum_num_steps);
     CVodeSetMinStep(cvodes_memory_block, minimum_step_size);
     CVodeSetMaxStep(cvodes_memory_block, maximum_step_size);
     CVodeSetInitStep(cvodes_memory_block, initial_step_size);
-    handleError( CVodeSetLinearSolver(cvodes_memory_block, linear_solver, NULL) );
-    handleError( CVodeSetPreconditioner(cvodes_memory_block, NULL, p_solve) );
+    handleError( CVodeSetLinearSolver(cvodes_memory_block, linear_solver, use_direct_solver ? A : NULL) );
+    
+    if (!use_direct_solver) handleError( CVodeSetPreconditioner(cvodes_memory_block, NULL, p_solve) );
 
     std::cout << get_state_csv_label() << std::endl;
     for (double t = 0; t <= end_time;)
@@ -51,6 +62,7 @@ int main()
     }
 
     N_VDestroy_Serial(state);
+    if (use_direct_solver) SUNMatDestroy(A);
     SUNLinSolFree(linear_solver);
     CVodeFree(&cvodes_memory_block);
     SUNContext_Free(&sun_context);

@@ -103,6 +103,7 @@ enum class TokenType {
     TAG_INIT_STEP,
     TAG_RELTOL,
     TAG_ABSTOL,
+    TAG_DIRECT_SOLVER,
     TAG_CUDA
 };
 

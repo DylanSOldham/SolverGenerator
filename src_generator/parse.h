@@ -54,6 +54,7 @@ struct SystemDeclarations
     std::string next_index = "0";
 
     bool use_cuda = false;
+    bool use_direct_solver = false;
     std::string end_time = "1e2";
     std::string sample_interval = "1e1";
     std::string reltol = "1e-6";

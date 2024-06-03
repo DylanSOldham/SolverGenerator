@@ -234,6 +234,7 @@ std::string generate_meta(SystemDeclarations& system)
     str << "\nconst double maximum_step_size = " << system.max_step_size << ";";
     str << "\nconst double minimum_step_size = " << system.min_step_size << ";";
     str << "\nconst double maximum_num_steps = " << system.max_num_steps << ";";
+    str << "\nconst bool use_direct_solver = " << system.use_direct_solver << ";";
 
     return str.str();
 }

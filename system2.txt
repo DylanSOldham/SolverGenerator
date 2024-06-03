@@ -2,26 +2,29 @@
 # SIMULATION META
 #-----------------------------------------------------------------------------------------------------------
 
-@END_TIME 10^8
-@SAMPLE_INTERVAL 10^6
+@END_TIME 10^2
+@SAMPLE_INTERVAL 10^0
 
 @INITIAL_STEP_SIZE 10^-10
 @MAXIMUM_STEP_SIZE 10^5
 @MINIMUM_STEP_SIZE 10^-30
-@MAXIMUM_NUM_STEPS 500
+@MAXIMUM_NUM_STEPS 5000
 
 @RELATIVE_TOLERANCE 10^-6
-@ABSOLUTE_TOLERANCE 10^10
+@ABSOLUTE_TOLERANCE 10^-1
 
 # @CUDA
+@DIRECT_LINEAR_SOLVER
+
+
 
 #-----------------------------------------------------------------------------------------------------------
 # MISC CONSTANTS
 #-----------------------------------------------------------------------------------------------------------
 
 PI = 3.1415926535
-BOLTZMAN_CONSTANT = 8.6173 * 10^-5          # eV / Kelvin
-MAX_CLUSTER_SIZE = 10000
+BOLTZMANN_CONSTANT = 8.6173 * 10^-5          # eV / Kelvin
+MAX_CLUSTER_SIZE = 1000
 
 
 
@@ -66,8 +69,8 @@ grain_size = 4 * 10^-3
 lattice_param = 3.6 * 10^-8                 # cm  
 burgers_vector = lattice_param / SQRT(2)
 atomic_volume = lattice_param ^ 3 / 4
-i_diffusion = i_diffusion_0 * EXP( -i_migration / (BOLTZMAN_CONSTANT * temperature) )
-v_diffusion = v_diffusion_0 * EXP( -v_migration / (BOLTZMAN_CONSTANT * temperature) )
+i_diffusion = i_diffusion_0 * EXP( -i_migration / (BOLTZMANN_CONSTANT * temperature) )
+v_diffusion = v_diffusion_0 * EXP( -v_migration / (BOLTZMANN_CONSTANT * temperature) )
 
 
 
@@ -93,8 +96,8 @@ d/dt Rho = 0.0 # dislocation_gain - dislocation_density_evolution * burgers_vect
 # INITIAL STATES
 #-----------------------------------------------------------------------------------------------------------
 
-INITIAL Ci[n] = 1 * 10^-5
-INITIAL Cv[n] = 1 * 10^-5
+INITIAL Ci[n] = 1 * 10^-1
+INITIAL Cv[n] = 1 * 10^-1
 INITIAL Rho = dislocation_density_0
 
 
@@ -120,11 +123,12 @@ b_i(n) = beta_iv(n) * Cv[1] + beta_ii(n) * Ci[1] + alpha_ii(n)
 c_i(n) = beta_ii(n) * Ci[1]
 
 a_v(n) = beta_vi(n) * Ci[1] + alpha_vv(n)                                                                         # Pokor 2b-d
-b_v(n) = beta_vi(n) * Cv[1] + beta_vv(n) * Cv[1] + alpha_vv(n)
+b_v(n) = beta_vi(n) * Ci[1] + beta_vv(n) * Cv[1] + alpha_vv(n)
 c_v(n) = beta_vv(n) * Cv[1]
 
-i1_em = SUM(i=3 .. MAX_CLUSTER_SIZE,alpha_ii(i)*Ci[i]) + 3*alpha_ii(3)*Ci[3] + 2 * beta_iv(3)*Cv[1]*Ci[3]         # Pokor 3b
-i1_cluster_abs = SUM(i=1 .. MAX_CLUSTER_SIZE,beta_ii(i)*Ci(i)) + SUM(i=2 .. MAX_CLUSTER_SIZE,beta_vi(i)*Ci[i])    # Pokor 3c
+i1_em = SUM(i = 3 .. MAX_CLUSTER_SIZE, alpha_ii(i)*Ci[i]) + 3*alpha_ii(3)*Ci[3] + 2 * beta_iv(3)*Cv[1]*Ci[3]      # Pokor 3b
+i1_cluster_abs = SUM(i = 1 .. MAX_CLUSTER_SIZE, beta_ii(i)*Ci[i]) 
+               + SUM(i = 2 .. MAX_CLUSTER_SIZE, beta_vi(i)*Cv[i])                                                 # Pokor 3c
 i1_d_abs = Rho * i_diffusion * i_dislocation_bias                                                                 # Pokor 3e
 i1_gb_abs = 6 * i_diffusion * SQRT(Rho*i_dislocation_bias 
             + SUM(i=1 .. MAX_CLUSTER_SIZE,beta_ii(i)*Ci[i]) 
@@ -132,31 +136,32 @@ i1_gb_abs = 6 * i_diffusion * SQRT(Rho*i_dislocation_bias
 
 Riv = 4 * PI * (i_diffusion + v_diffusion) * recombination_radius                                                 # Pokor 3d
 
-v1_em = SUM(i=3 .. MAX_CLUSTER_SIZE,alpha_vv(i)*Ci[i]) + 2*alpha_vv(2)*Cv[2] + beta_vi(2)*Ci[1]*Cv[2]             # Pokor 3b (modified for vacancies)
-v1_cluster_abs = SUM(i=1 .. MAX_CLUSTER_SIZE,beta_vv(i)*Cv(i)) + SUM(i=2 .. MAX_CLUSTER_SIZE,beta_iv(i)*Cv[i])    # Pokor 3c
+v1_em = SUM(i=3 .. MAX_CLUSTER_SIZE, alpha_vv(i)*Cv[i]) + 2*alpha_vv(2)*Cv[2] + beta_vi(2)*Ci[1]*Cv[2]            # Pokor 3b (modified for vacancies)
+v1_cluster_abs = SUM(i=1 .. MAX_CLUSTER_SIZE,beta_vv(i)*Cv[i]) 
+               + SUM(i=2 .. MAX_CLUSTER_SIZE,beta_iv(i)*Ci[i])                                                    # Pokor 3c
 v1_d_abs = Rho * v_diffusion * v_dislocation_bias                                                                 # Pokor 3e
 v1_gb_abs = 6 * v_diffusion * SQRT(Rho*v_dislocation_bias                                                         
             + SUM(i=1 .. MAX_CLUSTER_SIZE,beta_vv(i)*Cv[i]) 
             + SUM(i=1 .. MAX_CLUSTER_SIZE,beta_iv(i)*Ci[i])) / grain_size                                         # Pokor 3f
 
 alpha_ii(n) = 2 * PI * r(n) * i_bias_factor(n) 
-              * (i_diffusion / atomic_volume) * EXP(-i_binding_energy(n)/(BOLTZMAN_CONSTANT * temperature))       # Pokor 4a
+              * (i_diffusion / atomic_volume) * EXP(-i_binding_energy(n)/(BOLTZMANN_CONSTANT * temperature))      # Pokor 4a
 alpha_vv(n) = 2 * PI * r(n) * v_bias_factor(n) 
-              * (v_diffusion / atomic_volume) * EXP(-v_binding_energy(n)/(BOLTZMAN_CONSTANT * temperature))       # Pokor 4d
+              * (v_diffusion / atomic_volume) * EXP(-v_binding_energy(n)/(BOLTZMANN_CONSTANT * temperature))      # Pokor 4d
 beta_ii(n) = 2 * PI * r(n) * i_bias_factor(n) * i_diffusion                                                       # Pokor 4b
 beta_iv(n) = 2 * PI * r(n) * v_bias_factor(n) * v_diffusion                                                       # Pokor 4c
 beta_vi(n) = 2 * PI * r(n) * i_bias_factor(n) * i_diffusion                                                       # Pokor 4f
 beta_vv(n) = 2 * PI * r(n) * v_bias_factor(n) * v_diffusion                                                       # Pokor 4e
 
-i_bias_factor(n) = i_dislocation_bias + (SQRT(burgers_vector / (8 * PI * lattice_param)) 
+i_bias_factor(n) = i_dislocation_bias + (SQRT(burgers_vector / (8 * PI * lattice_param)) * i_loop_bias 
                    - i_dislocation_bias) * (1 / (n ^ (i_dislocation_bias_param / 2)))                             # Pokor 5
-v_bias_factor(n) = v_dislocation_bias + (SQRT(burgers_vector / (8 * PI * lattice_param)) 
+v_bias_factor(n) = v_dislocation_bias + (SQRT(burgers_vector / (8 * PI * lattice_param)) * v_loop_bias 
                    - v_dislocation_bias) * (1 / (n ^ (v_dislocation_bias_param / 2)))
 
 i_binding_energy(n) = i_formation + ((i_binding - i_formation) / (2^0.8 - 1)) * (n^0.8 - (n - 1)^0.8)             # Pokor 6
 v_binding_energy(n) = v_formation + ((v_binding - v_formation) / (2^0.8 - 1)) * (n^0.8 - (n - 1)^0.8)
 
-r(n) = SQRT(3. * lattice_param^2 * n / (4 * PI))
+r(n) = SQRT(SQRT(3.) * lattice_param^2 * n / (4 * PI))
 
 dislocation_gain = 0.0
 
@@ -166,4 +171,4 @@ dislocation_gain = 0.0
 # ADDITIONAL OUTPUTS
 #-----------------------------------------------------------------------------------------------------------
 
-OUTPUT extra b_i(3)
+OUTPUT loss b_i(3)
