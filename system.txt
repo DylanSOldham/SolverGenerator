@@ -11,5 +11,5 @@
 
 n = 1 .. 3
 
-d/dt C[n] = d/dt 3.0 * C[n]
+d/dt C[n] = 3.0 * n
 INITIAL C[n] = n

@@ -3,6 +3,8 @@
 
 int main(int argc, char **argv)
 {
+    std::cerr << "Generating...\n";
+
     std::string filename = (argc < 2) ? "system.txt" : argv[1];
     std::ifstream system_src_file(filename, std::ios::in);
     SystemDeclarations system;

@@ -1,3 +1,5 @@
+setlocal
+SET PATH=%PATH%;%cd%\mingw64\bin
 ".build\generator.exe" system.txt
 cd .build
 make solver -j4
