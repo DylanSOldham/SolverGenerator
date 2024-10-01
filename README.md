@@ -1,3 +1,5 @@
+![](screenshots/pdesolver.png)
+
 # PDE Solver Generator
 
 I wrote this tool to help with my capstone project at Oregon State University.

@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     read_system(system, system_src_file);
     system_src_file.close();
 
-    std::ofstream outmodule("generated/system.h", std::ios::out);
+    std::ofstream outmodule("../generated/system.h", std::ios::out);
     outmodule << "#include <cmath>"
               << "\n#include <nvector/nvector_serial.h>"
               << "\n#include <sstream>"

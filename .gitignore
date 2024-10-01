@@ -3,6 +3,7 @@ _deps/
 lib/
 CMakeFiles/
 .vscode/
+build
 mingw64/
 mingw64.zip
 cmake_install.cmake
